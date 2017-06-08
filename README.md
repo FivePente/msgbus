@@ -10,7 +10,7 @@ $ go install github.com/prologic/msgbus/...
 
 ## Usage
 
-Run the message bug daemon/server:
+Run the message bus daemon/server:
 
 ```#!bash
 $ msgbusd
@@ -26,7 +26,7 @@ $ msgbus sub foo
 ^C
 ```
 
-Send a few messages with the message bug client:
+Send a few messages with the message bus client:
 
 ```#!bash
 $ msgbus pub foo hello
