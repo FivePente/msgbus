@@ -14,7 +14,6 @@ import (
 
 // Server ...
 type Server struct {
-	bind   string
 	bus    *MessageBus
 	router *httprouter.Router
 }
@@ -101,8 +100,8 @@ func (s *Server) PushWebSocketHandler(topic string) websocket.Handler {
 	}
 }
 
-func (s *Server) ListenAndServe() {
-	log.Fatal(http.ListenAndServe(s.bind, s.router))
+func (s *Server) ListenAndServe(bind string) error {
+	return http.ListenAndServe(bind, s.router)
 }
 
 func (s *Server) initRoutes() {
@@ -113,10 +112,13 @@ func (s *Server) initRoutes() {
 }
 
 // NewServer ...
-func NewServer(bind string) *Server {
+func NewServer(bus *MessageBus) *Server {
+	if bus == nil {
+		bus = NewMessageBus()
+	}
+
 	server := &Server{
-		bind:   bind,
-		bus:    NewMessageBus(),
+		bus:    bus,
 		router: httprouter.New(),
 	}
 

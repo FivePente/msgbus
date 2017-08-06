@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/prologic/msgbus"
 )
@@ -15,5 +16,5 @@ func init() {
 }
 
 func main() {
-	msgbus.NewServer(bind).ListenAndServe()
+	log.Fatal(msgbus.NewServer().ListenAndServe(bind))
 }
