@@ -11,12 +11,6 @@ type Message struct {
 	Topic   string    `json:"topic"`
 	Payload []byte    `json:"payload"`
 	Created time.Time `json:"created"`
-	Acked   time.Time `json:"acked"`
-}
-
-// Ack ...
-type Ack struct {
-	Ack uint64 `json:"ack"`
 }
 
 // Listeners ...

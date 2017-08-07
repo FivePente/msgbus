@@ -76,10 +76,7 @@ func (s *Server) PushWebSocketHandler(topic string) websocket.Handler {
 			s.bus.Unsubscribe(id, topic)
 		}()
 
-		var (
-			err error
-			ack Ack
-		)
+		var err error
 
 		for {
 			msg := <-ch
@@ -88,14 +85,6 @@ func (s *Server) PushWebSocketHandler(topic string) websocket.Handler {
 				log.Printf("Error sending msg to %s", id)
 				continue
 			}
-
-			err = websocket.JSON.Receive(conn, &ack)
-			if err != nil {
-				log.Printf("Error receiving ack from %s", id)
-				continue
-			}
-
-			log.Printf("message %v acked %v by %s", msg, ack, id)
 		}
 	}
 }
