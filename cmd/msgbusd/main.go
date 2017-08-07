@@ -16,5 +16,5 @@ func init() {
 }
 
 func main() {
-	log.Fatal(msgbus.NewServer().ListenAndServe(bind))
+	log.Fatal(msgbus.NewServer(nil).ListenAndServe(bind))
 }
