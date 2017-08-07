@@ -8,6 +8,7 @@ import (
 // Message ...
 type Message struct {
 	ID      uint64    `json:"id"`
+	Topic   string    `json:"topic"`
 	Payload []byte    `json:"payload"`
 	Created time.Time `json:"created"`
 	Acked   time.Time `json:"acked"`
@@ -21,21 +22,21 @@ type Ack struct {
 // Listeners ...
 type Listeners struct {
 	ids map[string]bool
-	chs map[string]chan *Message
+	chs map[string]chan Message
 }
 
 // NewListeners ...
 func NewListeners() *Listeners {
 	return &Listeners{
 		ids: make(map[string]bool),
-		chs: make(map[string]chan *Message),
+		chs: make(map[string]chan Message),
 	}
 }
 
 // Add ...
-func (ls *Listeners) Add(id string) chan *Message {
+func (ls *Listeners) Add(id string) chan Message {
 	ls.ids[id] = true
-	ls.chs[id] = make(chan *Message)
+	ls.chs[id] = make(chan Message)
 	return ls.chs[id]
 }
 
@@ -54,7 +55,7 @@ func (ls *Listeners) Exists(id string) bool {
 }
 
 // Get ...
-func (ls *Listeners) Get(id string) (chan *Message, bool) {
+func (ls *Listeners) Get(id string) (chan Message, bool) {
 	ch, ok := ls.chs[id]
 	if !ok {
 		return nil, false
@@ -63,7 +64,7 @@ func (ls *Listeners) Get(id string) (chan *Message, bool) {
 }
 
 // NotifyAll ...
-func (ls *Listeners) NotifyAll(message *Message) {
+func (ls *Listeners) NotifyAll(message Message) {
 	for _, ch := range ls.chs {
 		ch <- message
 	}
@@ -90,8 +91,8 @@ func (mb *MessageBus) Len() int {
 }
 
 // NewMessage ...
-func (mb *MessageBus) NewMessage(payload []byte) *Message {
-	message := &Message{
+func (mb *MessageBus) NewMessage(payload []byte) Message {
+	message := Message{
 		ID:      mb.seqid,
 		Payload: payload,
 		Created: time.Now(),
@@ -103,10 +104,12 @@ func (mb *MessageBus) NewMessage(payload []byte) *Message {
 }
 
 // Put ...
-func (mb *MessageBus) Put(topic string, message *Message) {
+func (mb *MessageBus) Put(topic string, message Message) {
+	message.Topic = topic
+
 	log.Printf(
 		"[msgbus] PUT id=%d topic=%s payload=%s",
-		message.ID, topic, message.Payload,
+		message.ID, message.Topic, message.Payload,
 	)
 	q, ok := mb.topics[topic]
 	if !ok {
@@ -119,25 +122,25 @@ func (mb *MessageBus) Put(topic string, message *Message) {
 }
 
 // Get ...
-func (mb *MessageBus) Get(topic string) (*Message, bool) {
+func (mb *MessageBus) Get(topic string) (Message, bool) {
 	log.Printf("[msgbus] GET topic=%s", topic)
 	q, ok := mb.topics[topic]
 	if !ok {
-		return &Message{}, false
+		return Message{}, false
 	}
 
 	m := q.Pop()
 	if m == nil {
-		return &Message{}, false
+		return Message{}, false
 	}
-	return m.(*Message), true
+	return m.(Message), true
 }
 
 // NotifyAll ...
-func (mb *MessageBus) NotifyAll(topic string, message *Message) {
+func (mb *MessageBus) NotifyAll(topic string, message Message) {
 	log.Printf(
 		"[msgbus] NotifyAll id=%d topic=%s payload=%s",
-		message.ID, topic, message.Payload,
+		message.ID, message.Topic, message.Payload,
 	)
 	ls, ok := mb.listeners[topic]
 	if !ok {
@@ -147,7 +150,7 @@ func (mb *MessageBus) NotifyAll(topic string, message *Message) {
 }
 
 // Subscribe ...
-func (mb *MessageBus) Subscribe(id, topic string) chan *Message {
+func (mb *MessageBus) Subscribe(id, topic string) chan Message {
 	log.Printf("[msgbus] Subscribe id=%s topic=%s", id, topic)
 	ls, ok := mb.listeners[topic]
 	if !ok {

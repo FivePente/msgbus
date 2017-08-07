@@ -1,49 +1,40 @@
 package main
 
 import (
-	"bytes"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
-	"golang.org/x/net/websocket"
-
-	"github.com/prologic/msgbus"
+	"github.com/prologic/msgbus/client"
 )
 
 const defaultTopic = "hello"
 
-var (
-	host string
-	port int
-	err  error
-	msg  msgbus.Message
-	ws   *websocket.Conn
-)
+func main() {
+	var (
+		host string
+		port int
+	)
 
-func init() {
 	flag.StringVar(&host, "host", "localhost", "host to connect to")
 	flag.IntVar(&port, "port", 8000, "port to connect to")
-}
-
-func main() {
 	flag.Parse()
 
+	client := client.NewClient(host, port, nil)
+
 	if flag.Arg(0) == "sub" {
-		subscribe(flag.Arg(1))
+		subscribe(client, flag.Arg(1))
 	} else if flag.Arg(0) == "pub" {
-		publish(flag.Arg(1), flag.Arg(2))
+		publish(client, flag.Arg(1), flag.Arg(2))
+	} else if flag.Arg(0) == "pull" {
+		pull(client, flag.Arg(1))
 	} else {
 		log.Fatalf("invalid command %s", flag.Arg(0))
 	}
 }
 
-func publish(topic string, message string) {
-	var payload bytes.Buffer
-
+func publish(client *client.Client, topic, message string) {
 	if topic == "" {
 		topic = defaultTopic
 	}
@@ -52,54 +43,30 @@ func publish(topic string, message string) {
 		log.Printf("Reading message from stdin...\n")
 		buf, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("error reading message from stdin: %s", err)
 		}
-		payload.Write(buf)
-	} else {
-		payload.Write([]byte(message))
+		message = string(buf[:])
 	}
 
-	url := fmt.Sprintf("http://%s:%d/%s", host, port, topic)
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("PUT", url, &payload)
+	err := client.Publish(topic, message)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = client.Do(req)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error publishing message: %s", err)
 	}
 }
 
-func subscribe(topic string) {
+func pull(client *client.Client, topic string) {
 	if topic == "" {
 		topic = defaultTopic
 	}
 
-	origin := "http://localhost/"
-	url := fmt.Sprintf("ws://%s:%d/push/%s", host, port, topic)
-	ws, err = websocket.Dial(url, "", origin)
-	if err != nil {
-		log.Fatal(err)
+	client.Pull(topic)
+}
+
+func subscribe(client *client.Client, topic string) {
+	if topic == "" {
+		topic = defaultTopic
 	}
 
-	log.Printf("Listening for messages from %s", url)
-
-	for {
-		err = websocket.JSON.Receive(ws, &msg)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		ack := msgbus.Ack{Ack: msg.ID}
-		err = websocket.JSON.Send(ws, &ack)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		log.Printf("Received: %s\n", msg.Payload)
-	}
+	s := client.Subscribe(topic)
+	s.Run()
 }
