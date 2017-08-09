@@ -12,7 +12,55 @@ A distirbuted, scalable Message Bus server and library written in Go
 $ go install github.com/prologic/msgbus/...
 ```
 
-## Usage
+## Usage (library)
+
+Install the package into your project:
+
+```#!bash
+$ go get github.com/prologic/msgbus
+```
+
+Use the `MessageBus` type either directly:
+
+```#!go
+package main
+
+import (
+	"log"
+
+	"github.com/prologic/msgbus"
+)
+
+func main() {
+	m := msgbus.NewMessageBus()
+	m.Put("foo", m.NewMessage([]byte("Hello World!")))
+
+	msg, ok := m.Get("foo")
+	if !ok {
+		log.Printf("No more messages in queue: foo")
+	} else {
+		log.Printf(
+			"Received message: id=%s topic=%s payload=%s",
+			msg.ID, msg.Topic, msg.Payload,
+		)
+	}
+}
+```
+
+Running this example should yield something like this:
+
+```#!bash
+$ go run examples/hello.go
+2017/08/09 03:01:54 [msgbus] PUT id=0 topic=foo payload=Hello World!
+2017/08/09 03:01:54 [msgbus] NotifyAll id=0 topic=foo payload=Hello World!
+2017/08/09 03:01:54 [msgbus] GET topic=foo
+2017/08/09 03:01:54 Received message: id=%!s(uint64=0) topic=foo payload=Hello World!
+``` 
+
+See the [godoc](https://godoc.org/github.com/prologic/msgbus) for further
+documentation and other examples.
+
+## Usage (tool)
 
 Run the message bus daemon/server:
 
