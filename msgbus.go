@@ -1,8 +1,15 @@
 package msgbus
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"strings"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 // Message ...
@@ -171,5 +178,82 @@ func (mb *MessageBus) Unsubscribe(id, topic string) {
 	if ls.Exists(id) {
 		// Already verified th listener exists
 		ls.Remove(id)
+	}
+}
+
+func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" && (r.URL.Path == "/" || r.URL.Path == "") {
+		for topic, _ := range mb.topics {
+			w.Write([]byte(fmt.Sprintf("%s\n", topic)))
+		}
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	topic := strings.TrimLeft(r.URL.Path, "/")
+	topic = strings.TrimRight(topic, "/")
+
+	switch r.Method {
+	case "POST", "PUT":
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		mb.Put(topic, mb.NewMessage(body))
+	case "GET":
+		if r.Header.Get("Upgrade") == "websocket" {
+			NewClient(topic, mb).Handler().ServeHTTP(w, r)
+			return
+		}
+
+		message, ok := mb.Get(topic)
+
+		if !ok {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		out, err := json.Marshal(message)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(out)
+	case "DELETE":
+		http.Error(w, "Not Implemented", http.StatusNotImplemented)
+	}
+}
+
+type Client struct {
+	topic string
+	bus   *MessageBus
+	id    string
+	ch    chan Message
+}
+
+func NewClient(topic string, bus *MessageBus) *Client {
+	return &Client{topic: topic, bus: bus}
+}
+
+func (c *Client) Handler() websocket.Handler {
+	return func(conn *websocket.Conn) {
+		c.id = conn.Request().RemoteAddr
+		c.ch = c.bus.Subscribe(c.id, c.topic)
+		defer func() {
+			c.bus.Unsubscribe(c.id, c.topic)
+		}()
+
+		var err error
+
+		for {
+			msg := <-c.ch
+			err = websocket.JSON.Send(conn, msg)
+			if err != nil {
+				log.Printf("Error sending msg to %s", c.id)
+				continue
+			}
+		}
 	}
 }

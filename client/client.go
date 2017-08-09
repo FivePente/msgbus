@@ -78,7 +78,7 @@ func (c *Client) Handle(msg *msgbus.Message) {
 func (c *Client) Pull(topic string) {
 	var msg *msgbus.Message
 
-	url := fmt.Sprintf("http://%s:%d/pull/%s", c.host, c.port, topic)
+	url := fmt.Sprintf("http://%s:%d/%s", c.host, c.port, topic)
 	client := &http.Client{}
 
 	for {
@@ -168,7 +168,7 @@ func (s *Subscriber) Run() {
 	origin := "http://localhost/"
 
 	url := fmt.Sprintf(
-		"ws://%s:%d/push/%s",
+		"ws://%s:%d/%s",
 		s.client.host, s.client.port, s.topic,
 	)
 

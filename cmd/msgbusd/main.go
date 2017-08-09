@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 
 	"github.com/prologic/msgbus"
 )
@@ -16,5 +17,6 @@ func init() {
 }
 
 func main() {
-	log.Fatal(msgbus.NewServer(nil).ListenAndServe(bind))
+	http.Handle("/", msgbus.NewMessageBus())
+	log.Fatal(http.ListenAndServe(bind, nil))
 }
