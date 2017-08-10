@@ -1,5 +1,10 @@
 # msgbus
 
+[![Build Status](https://travis-ci.org/prologic/msgbus.svg)](https://travis-ci.org/prologic/msgbus)
+[![CodeCov](https://codecov.io/gh/prologic/msgbus/branch/master/graph/badge.svg)](https://codecov.io/gh/prologic/msgbus)
+[![Go Report Card](https://goreportcard.com/badge/prologic/msgbus)](https://goreportcard.com/report/prologic/msgbus)
+[![GoDoc](https://godoc.org/github.com/prologic/msgbus?status.svg)](https://godoc.org/github.com/prologic/msgbus) 
+
 A distirbuted, scalable Message Bus server and library written in Go
 
 **WIP:** THis is still highly experimental and not fit for production use.
