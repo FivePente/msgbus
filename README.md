@@ -7,7 +7,8 @@
 
 A distirbuted, scalable Message Bus server and library written in Go
 
-**WIP:** THis is still highly experimental and not fit for production use.
+**Status:** Alpha Software. This is considered "alpha quality" and is actively
+being developed, tested and evolved with other projects and use-cases.
 
 **Update:** (*2017-08-07*) This is now being used by [autodock](https://github.com/prologic/autodock) and is undergoing heavy development to deliver what is laid out here.
 
