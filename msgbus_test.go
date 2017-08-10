@@ -16,7 +16,7 @@ func TestMessage(t *testing.T) {
 	assert.Equal(t, mb.Len(), 0)
 
 	topic := "foo"
-	expected := &Message{Payload: []byte("bar")}
+	expected := Message{Topic: topic, Payload: []byte("bar")}
 	mb.Put(topic, expected)
 
 	actual, ok := mb.Get(topic)
@@ -31,13 +31,13 @@ func TestMessageGetEmpty(t *testing.T) {
 	topic := "foo"
 	msg, ok := mb.Get(topic)
 	assert.False(t, ok)
-	assert.Equal(t, msg, &Message{})
+	assert.Equal(t, msg, Message{})
 }
 
 func BenchmarkMessageBusPut(b *testing.B) {
 	mb := NewMessageBus()
 	topic := "foo"
-	msg := &Message{Payload: []byte("foo")}
+	msg := Message{Payload: []byte("foo")}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mb.Put(topic, msg)
@@ -47,7 +47,7 @@ func BenchmarkMessageBusPut(b *testing.B) {
 func BenchmarkMessageBusGet(b *testing.B) {
 	mb := NewMessageBus()
 	topic := "foo"
-	msg := &Message{Payload: []byte("foo")}
+	msg := Message{Payload: []byte("foo")}
 	for i := 0; i < b.N; i++ {
 		mb.Put(topic, msg)
 	}
@@ -69,7 +69,7 @@ func BenchmarkMessageBusGetEmpty(b *testing.B) {
 func BenchmarkMessageBusPutGet(b *testing.B) {
 	mb := NewMessageBus()
 	topic := "foo"
-	msg := &Message{Payload: []byte("foo")}
+	msg := Message{Payload: []byte("foo")}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mb.Put(topic, msg)
