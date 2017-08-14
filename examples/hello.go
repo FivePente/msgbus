@@ -7,16 +7,18 @@ import (
 )
 
 func main() {
-	m := msgbus.NewMessageBus()
-	m.Put("foo", m.NewMessage([]byte("Hello World!")))
+	m := msgbus.NewMessageBus(nil)
+	t := m.NewTopic("foo")
+	m.Put(m.NewMessage(t, []byte("Hello World!")))
 
-	msg, ok := m.Get("foo")
+	msg, ok := m.Get(t)
 	if !ok {
 		log.Printf("No more messages in queue: foo")
-	} else {
-		log.Printf(
-			"Received message: id=%s topic=%s payload=%s",
-			msg.ID, msg.Topic, msg.Payload,
-		)
+		return
 	}
+
+	log.Printf(
+		"Received message: id=%s topic=%s payload=%s",
+		msg.ID, msg.Topic, msg.Payload,
+	)
 }

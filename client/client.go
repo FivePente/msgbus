@@ -70,7 +70,7 @@ func NewClient(host string, port int, options *Options) *Client {
 func (c *Client) Handle(msg *msgbus.Message) {
 	log.Printf(
 		"[msgbus] received message: id=%d topic=%s payload=%s",
-		msg.ID, msg.Topic, msg.Payload,
+		msg.ID, msg.Topic.Name, msg.Payload,
 	)
 }
 
