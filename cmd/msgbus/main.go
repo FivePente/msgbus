@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/prologic/msgbus/client"
 )
@@ -68,5 +70,19 @@ func subscribe(client *client.Client, topic string) {
 	}
 
 	s := client.Subscribe(topic)
-	s.Run()
+	go s.Run()
+
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Printf("caught signal %s: ", sig)
+		s.Stop()
+		done <- true
+	}()
+
+	<-done
 }

@@ -140,30 +140,34 @@ func (c *Client) Publish(topic, message string) error {
 
 // Subscribe ...
 func (c *Client) Subscribe(topic string) *Subscriber {
-	return &Subscriber{client: c, topic: topic}
+	return &Subscriber{
+		client: c,
+		topic:  topic,
+		errch:  make(chan error),
+		stopch: make(chan bool),
+	}
 }
 
 // Subscriber ...
 type Subscriber struct {
+	conn   *websocket.Conn
 	client *Client
-	topic  string
 
-	conn *websocket.Conn
+	topic string
 
-	stopchan chan bool
+	errch  chan error
+	stopch chan bool
 }
 
 // Stop ...
 func (s *Subscriber) Stop() {
-	s.stopchan <- true
+	close(s.errch)
+	s.stopch <- true
 }
 
 // Run ...
 func (s *Subscriber) Run() {
-	var (
-		err error
-		msg *msgbus.Message
-	)
+	var err error
 
 	origin := "http://localhost/"
 
@@ -180,15 +184,32 @@ func (s *Subscriber) Run() {
 			continue
 		}
 
-		for {
-			err = websocket.JSON.Receive(s.conn, &msg)
+		go s.Reader()
+
+		select {
+		case err = <-s.errch:
 			if err != nil {
 				log.Printf("lost connection to %s: %s", url, err)
 				time.Sleep(s.client.reconnect)
-				break
-			} else {
-				s.client.Handle(msg)
 			}
+		case <-s.stopch:
+			log.Printf("shutting down ...")
+			s.conn.Close()
+			break
 		}
+	}
+}
+
+// Reader ...
+func (s *Subscriber) Reader() {
+	var msg *msgbus.Message
+
+	for {
+		err := websocket.JSON.Receive(s.conn, &msg)
+		if err != nil {
+			s.errch <- err
+			break
+		}
+		s.client.Handle(msg)
 	}
 }
