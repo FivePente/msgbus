@@ -14,16 +14,16 @@ import (
 const defaultTopic = "hello"
 
 func main() {
-	var (
-		host string
-		port int
+	var url string
+
+	flag.StringVar(
+		&url, "url",
+		"http://localhost:8000", "url to connect to",
 	)
 
-	flag.StringVar(&host, "host", "localhost", "host to connect to")
-	flag.IntVar(&port, "port", 8000, "port to connect to")
 	flag.Parse()
 
-	client := client.NewClient(host, port, nil)
+	client := client.NewClient(url, nil)
 
 	if flag.Arg(0) == "sub" {
 		subscribe(client, flag.Arg(1))

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -23,8 +25,7 @@ const (
 
 // Client ...
 type Client struct {
-	host string
-	port int
+	url string
 
 	retry     time.Duration
 	reconnect time.Duration
@@ -39,16 +40,15 @@ type Options struct {
 }
 
 // NewClient ...
-func NewClient(host string, port int, options *Options) *Client {
+func NewClient(url string, options *Options) *Client {
 	var (
 		reconnectInterval = DefaultReconnectInterval
 		retryInterval     = DefaultRetryInterval
 	)
 
-	client := &Client{
-		host: host,
-		port: port,
-	}
+	url = strings.TrimSuffix(url, "/")
+
+	client := &Client{url: url}
 
 	if options != nil {
 		if options.ReconnectInterval != 0 {
@@ -78,13 +78,16 @@ func (c *Client) Handle(msg *msgbus.Message) {
 func (c *Client) Pull(topic string) {
 	var msg *msgbus.Message
 
-	url := fmt.Sprintf("http://%s:%d/%s", c.host, c.port, topic)
+	url := fmt.Sprintf("%s/%s", c.url, topic)
 	client := &http.Client{}
 
 	for {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Printf("error constructing pull request to %s: %s", url, err)
+			log.Printf(
+				"error constructing pull request to %s: %s",
+				url, err,
+			)
 			time.Sleep(c.retry)
 			continue
 		}
@@ -121,7 +124,7 @@ func (c *Client) Publish(topic, message string) error {
 
 	payload.Write([]byte(message))
 
-	url := fmt.Sprintf("http://%s:%d/%s", c.host, c.port, topic)
+	url := fmt.Sprintf("%s/%s", c.url, topic)
 
 	client := &http.Client{}
 
@@ -171,10 +174,15 @@ func (s *Subscriber) Run() {
 
 	origin := "http://localhost/"
 
-	url := fmt.Sprintf(
-		"ws://%s:%d/%s",
-		s.client.host, s.client.port, s.topic,
-	)
+	u, err := url.Parse(s.client.url)
+	if err != nil {
+		log.Fatal("invalid url: %s", s.client.url)
+	}
+
+	u.Scheme = "ws"
+	u.Path += fmt.Sprintf("/%s", s.topic)
+
+	url := u.String()
 
 	for {
 		s.conn, err = websocket.Dial(url, "", origin)
