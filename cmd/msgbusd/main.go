@@ -22,5 +22,6 @@ func init() {
 func main() {
 	options := msgbus.Options{DefaultTTL: ttl}
 	http.Handle("/", msgbus.NewMessageBus(&options))
+	log.Printf("msgbusd listening on %s", bind)
 	log.Fatal(http.ListenAndServe(bind, nil))
 }
