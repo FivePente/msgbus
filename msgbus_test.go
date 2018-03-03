@@ -47,7 +47,7 @@ func BenchmarkMessageBusPut(b *testing.B) {
 func BenchmarkMessageBusGet(b *testing.B) {
 	mb := NewMessageBus(nil)
 	topic := mb.NewTopic("foo")
-	msg := Message{Payload: []byte("foo")}
+	msg := Message{Topic: topic, Payload: []byte("foo")}
 	for i := 0; i < b.N; i++ {
 		mb.Put(msg)
 	}
@@ -69,7 +69,7 @@ func BenchmarkMessageBusGetEmpty(b *testing.B) {
 func BenchmarkMessageBusPutGet(b *testing.B) {
 	mb := NewMessageBus(nil)
 	topic := mb.NewTopic("foo")
-	msg := Message{Payload: []byte("foo")}
+	msg := Message{Topic: topic, Payload: []byte("foo")}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mb.Put(msg)
