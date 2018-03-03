@@ -146,10 +146,10 @@ func (mb *MessageBus) NewMessage(topic *Topic, payload []byte) Message {
 
 // Put ...
 func (mb *MessageBus) Put(message Message) {
-	log.Printf(
-		"[msgbus] PUT id=%d topic=%s payload=%s",
-		message.ID, message.Topic.Name, message.Payload,
-	)
+	//log.Printf(
+	//	"[msgbus] PUT id=%d topic=%s payload=%s",
+	//	message.ID, message.Topic.Name, message.Payload,
+	//)
 
 	q, ok := mb.queues[message.Topic]
 	if !ok {
@@ -163,7 +163,7 @@ func (mb *MessageBus) Put(message Message) {
 
 // Get ...
 func (mb *MessageBus) Get(topic *Topic) (Message, bool) {
-	log.Printf("[msgbus] GET topic=%s", topic)
+	//log.Printf("[msgbus] GET topic=%s", topic)
 
 	q, ok := mb.queues[topic]
 	if !ok {
@@ -179,10 +179,10 @@ func (mb *MessageBus) Get(topic *Topic) (Message, bool) {
 
 // NotifyAll ...
 func (mb *MessageBus) NotifyAll(message Message) {
-	log.Printf(
-		"[msgbus] NotifyAll id=%d topic=%s payload=%s",
-		message.ID, message.Topic.Name, message.Payload,
-	)
+	//log.Printf(
+	//	"[msgbus] NotifyAll id=%d topic=%s payload=%s",
+	//	message.ID, message.Topic.Name, message.Payload,
+	//)
 	ls, ok := mb.listeners[message.Topic]
 	if !ok {
 		return
@@ -192,7 +192,7 @@ func (mb *MessageBus) NotifyAll(message Message) {
 
 // Subscribe ...
 func (mb *MessageBus) Subscribe(id, topic string) chan Message {
-	log.Printf("[msgbus] Subscribe id=%s topic=%s", id, topic)
+	//log.Printf("[msgbus] Subscribe id=%s topic=%s", id, topic)
 	t, ok := mb.topics[topic]
 	if !ok {
 		t = &Topic{Name: topic, TTL: mb.ttl, Created: time.Now()}
@@ -215,7 +215,7 @@ func (mb *MessageBus) Subscribe(id, topic string) chan Message {
 
 // Unsubscribe ...
 func (mb *MessageBus) Unsubscribe(id, topic string) {
-	log.Printf("[msgbus] Unsubscribe id=%s topic=%s", id, topic)
+	//log.Printf("[msgbus] Unsubscribe id=%s topic=%s", id, topic)
 	t, ok := mb.topics[topic]
 	if !ok {
 		return
@@ -311,6 +311,7 @@ func (c *Client) Handler() websocket.Handler {
 			msg := <-c.ch
 			err = websocket.JSON.Send(conn, msg)
 			if err != nil {
+				// TODO: Retry? Put the message back in the queue?
 				log.Printf("Error sending msg to %s", c.id)
 				continue
 			}
