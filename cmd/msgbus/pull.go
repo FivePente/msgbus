@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/prologic/msgbus/client"
 )
@@ -18,7 +19,7 @@ This is primarily useful in situations where a subscription was lost and you
 want to "catch up" and pull any messages left in the queue for that topic.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		uri := cmd.Flag("uri").Value.String()
+		uri := viper.GetString("uri")
 		client := client.NewClient(uri, nil)
 
 		topic := args[0]

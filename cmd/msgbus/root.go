@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -47,6 +48,9 @@ func init() {
 		"uri", "u", "http://localhost:8000",
 		"URI to connect to msgbusd",
 	)
+
+	viper.BindPFlag("uri", RootCmd.PersistentFlags().Lookup("uri"))
+	viper.SetDefault("uri", "http://localhost:8000/")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -62,11 +66,13 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".cobra-example" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".cobra-example")
+		viper.SetConfigName(".msgbus.yaml")
 	}
 
+	// from the environment
+	viper.SetEnvPrefix("MSGBUS")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/prologic/msgbus/client"
 )
@@ -21,7 +22,7 @@ This is an asynchronous operation and does not wait for a response unless the
 -w/--wait option is also present.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		uri := cmd.Flag("uri").Value.String()
+		uri := viper.GetString("uri")
 		client := client.NewClient(uri, nil)
 
 		topic := args[0]
