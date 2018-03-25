@@ -107,6 +107,82 @@ $ msgbus pull foo
 
 > This is slightly different from a listening subscriber (*using websockets*) where messages are pulled directly.
 
+## Usage (HTTP)
+
+Run the message bus daemon/server:
+
+```#!bash
+$ msgbusd
+2018/03/25 13:21:18 msgbusd listening on :8000
+```
+
+Send a message with using `curl`:
+
+```#!bash
+$ curl -q -o - -X PUT -d '{"message": "hello"}' http://localhost:8000/hello
+```
+
+Pull the messages off the "hello" queue using `curl`:
+
+```#!bash
+$ curl -q -o - http://localhost:8000/hello
+{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","expires":"0001-01-01T00:00:00Z","created":"2018-03-25T13:18:38.732465-07:00"}
+```
+
+Decode the payload:
+
+```#!bash
+$ echo 'eyJtZXNzYWdlIjogImhlbGxvIn0=' | base64 -d
+{"message": "hello"}
+```
+
+## API
+
+### GET /
+
+List all known topics/queues.
+
+Example:
+
+```#!bash
+$ curl -q -o - http://localhost:8000/
+hello
+```
+
+## POST|PUT /<topic>
+
+Post a new message to the queue named by `<topic>`.
+
+**NB:** Either `POST` or `PUT` methods can be used here.
+
+Example:
+
+```#!bash
+$ curl -q -o - -X PUT -d '{"message": "hello"}' http://localhost:8000/hello
+```
+
+## GET /<topic>
+
+Get the next message of the queue named by `<topic>`.
+
+- If the topic is not found. Returns: `404 Not Found`
+- If the Websockets `Upgrade` header is found, upgrades to a websocket channel
+  and subscribes to the topic `<topic>`. Each new message published to the
+  topic `<topic>` are instantly published to all subscribers.
+
+Example:
+
+```#!bash
+$ curl -q -o - http://localhost:8000/hello
+{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","expires":"0001-01-01T00:00:00Z","created":"2018-03-25T13:18:38.732465-07:00"}
+```
+
+## DELETE /<topic>
+
+Deletes a queue named by `<topic>`.
+
+*Not implemented*.
+
 ## Design
 
 Design decisions so far:
