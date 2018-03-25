@@ -1,0 +1,21 @@
+version: "3.3"
+
+services:
+  msgbus:
+    image: prologic/msgbus
+    networks:
+      - lb_traefik
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.port=8000"
+        - "traefik.backend=msgbus"
+        - "docker.network=traefik"
+        - "traefik.frontend.rule=Host:msgbus.shortcircuit.net.au"
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+
+networks:
+  lb_traefik:
+    external: true

@@ -1,4 +1,5 @@
 *~*
 *.bak
+coverage.txt
 cmd/msgbus/msgbus
 cmd/msgbusd/msgbusd
