@@ -31,7 +31,7 @@ build: clean deps
 	@cd cmd/$(CLIENT) && \
 		go build -tags $(BUILD_TAGS) -installsuffix netgo \
 		-ldflags $(BUILD_LDFLAGS) .
-	@echo "Built $$(./cmd/$(CLIENT)/$(CLIENT) -v)"
+	@echo "Built $$(./cmd/$(CLIENT)/$(CLIENT) --version)"
 
 image:
 	@docker build --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(REPO):$(TAG) .

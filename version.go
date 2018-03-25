@@ -5,9 +5,6 @@ import (
 )
 
 var (
-	//Package package name
-	Package = "msgbus"
-
 	// Version release version
 	Version = "0.1.0"
 
@@ -18,7 +15,7 @@ var (
 	GitCommit = "HEAD"
 )
 
-// FullVersion display the full version, build and commit hash
+// FullVersion returns the full version, build and commit hash
 func FullVersion() string {
-	return fmt.Sprintf("%s-%s-%s@%s", Package, Version, Build, GitCommit)
+	return fmt.Sprintf("%s-%s@%s", Version, Build, GitCommit)
 }

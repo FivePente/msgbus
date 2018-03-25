@@ -27,12 +27,12 @@ func main() {
 	flag.Parse()
 
 	if version {
-		fmt.Printf(msgbus.FullVersion())
+		fmt.Printf("msgbusd %s", msgbus.FullVersion())
 		os.Exit(0)
 	}
 
 	options := msgbus.Options{DefaultTTL: ttl}
 	http.Handle("/", msgbus.NewMessageBus(&options))
-	log.Printf("%s listening on %s", msgbus.Package, bind)
+	log.Printf("msgbusd %s listening on %s", msgbus.FullVersion(), bind)
 	log.Fatal(http.ListenAndServe(bind, nil))
 }
