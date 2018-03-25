@@ -2,7 +2,6 @@ package msgbus
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -234,10 +233,14 @@ func (mb *MessageBus) Unsubscribe(id, topic string) {
 
 func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" && (r.URL.Path == "/" || r.URL.Path == "") {
-		for topic := range mb.topics {
-			w.Write([]byte(fmt.Sprintf("%s\n", topic)))
+		out, err := json.Marshal(mb.topics)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		w.WriteHeader(http.StatusOK)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(out)
 		return
 	}
 
@@ -277,6 +280,7 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(out)
 	case "DELETE":
 		http.Error(w, "Not Implemented", http.StatusNotImplemented)
