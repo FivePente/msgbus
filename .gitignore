@@ -1,2 +1,4 @@
-*~
+*~*
 *.bak
+cmd/msgbus/msgbus
+cmd/msgbusd/msgbusd

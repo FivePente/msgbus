@@ -2,26 +2,37 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/prologic/msgbus"
 )
 
-var (
-	bind string
-	ttl  time.Duration
-)
+func main() {
 
-func init() {
+	var (
+		version bool
+		bind    string
+		ttl     time.Duration
+	)
+
+	flag.BoolVar(&version, "v", false, "display version information")
+
 	flag.StringVar(&bind, "bind", ":8000", "interface and port to bind to")
 	flag.DurationVar(&ttl, "ttl", 60*time.Second, "default ttl")
-}
 
-func main() {
+	flag.Parse()
+
+	if version {
+		fmt.Printf(msgbus.FullVersion())
+		os.Exit(0)
+	}
+
 	options := msgbus.Options{DefaultTTL: ttl}
 	http.Handle("/", msgbus.NewMessageBus(&options))
-	log.Printf("msgbusd listening on %s", bind)
+	log.Printf("%s listening on %s", msgbus.Package, bind)
 	log.Fatal(http.ListenAndServe(bind, nil))
 }

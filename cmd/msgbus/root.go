@@ -7,14 +7,17 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/prologic/msgbus"
 )
 
 var configFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "msgbus",
-	Short: "Command-line client for msgbus",
+	Use:     "msgbus",
+	Version: msgbus.FullVersion(),
+	Short:   "Command-line client for msgbus",
 	Long: `This is the command-line client for the msgbus daemon msgbusd.
 
 This lets you publish, subscribe and pull messages from a running msgbusd
