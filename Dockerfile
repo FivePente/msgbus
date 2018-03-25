@@ -19,7 +19,7 @@ RUN make TAG=$TAG BUILD=$BUILD build
 # Runtime
 FROM scratch
 
-ENV LIBRARY msgbud
+ENV LIBRARY msgbus
 ENV SERVER msgbusd
 ENV CLIENT msgbus
 ENV REPO prologic/$LIBRARY
