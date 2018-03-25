@@ -5,7 +5,10 @@
 [![Go Report Card](https://goreportcard.com/badge/prologic/msgbus)](https://goreportcard.com/report/prologic/msgbus)
 [![GoDoc](https://godoc.org/github.com/prologic/msgbus?status.svg)](https://godoc.org/github.com/prologic/msgbus) 
 
-A distirbuted, scalable Message Bus server and library written in Go
+A real-time message bus server and library written in Go with strong
+consistency and reliability guarantees.
+
+(*eventual goals of distributed high-availability and sharding*)
 
 **Status:** Alpha Software. This is considered "alpha quality" and is actively
 being developed, tested and evolved with other projects and use-cases.
@@ -189,7 +192,7 @@ Design decisions so far:
 
 * In memory queues (*may extend this with interfaces and persistence*)
 * HTTP API
-* Websockets for realtime push of events
+* Websockets for real-time push of events
 * Sequence ID Message tracking
 * Pull and Push model
 
