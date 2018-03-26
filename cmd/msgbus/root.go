@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -44,6 +45,11 @@ func init() {
 		"config file (default is $HOME/.msgbus.yaml)",
 	)
 
+	RootCmd.PersistentFlags().BoolP(
+		"debug", "d", false,
+		"Enable debug logging",
+	)
+
 	RootCmd.PersistentFlags().StringP(
 		"uri", "u", "http://localhost:8000",
 		"URI to connect to msgbusd",
@@ -51,6 +57,16 @@ func init() {
 
 	viper.BindPFlag("uri", RootCmd.PersistentFlags().Lookup("uri"))
 	viper.SetDefault("uri", "http://localhost:8000/")
+
+	viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
+	viper.SetDefault("debug", false)
+
+	// set logging level
+	if viper.GetBool("debug") {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.

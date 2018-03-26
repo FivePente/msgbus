@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 
 	"github.com/prologic/msgbus"
@@ -67,11 +68,15 @@ func NewClient(url string, options *Options) *Client {
 }
 
 // Handle ...
-func (c *Client) Handle(msg *msgbus.Message) {
-	log.Printf(
-		"[msgbus] received message: id=%d topic=%s payload=%s",
-		msg.ID, msg.Topic.Name, msg.Payload,
-	)
+func (c *Client) Handle(msg *msgbus.Message) error {
+	out, err := json.Marshal(msg)
+	if err != nil {
+		log.Errorf("error marshalling message: %s", err)
+		return err
+	}
+
+	os.Stdout.Write(out)
+	return nil
 }
 
 // Pull ...
@@ -187,7 +192,7 @@ func (s *Subscriber) Run() {
 	for {
 		s.conn, err = websocket.Dial(url, "", origin)
 		if err != nil {
-			log.Printf("error connecting to %s: %s", url, err)
+			log.Warnf("error connecting to %s: %s", url, err)
 			time.Sleep(s.client.reconnect)
 			continue
 		}
@@ -197,11 +202,11 @@ func (s *Subscriber) Run() {
 		select {
 		case err = <-s.errch:
 			if err != nil {
-				log.Printf("lost connection to %s: %s", url, err)
+				log.Warnf("lost connection to %s: %s", url, err)
 				time.Sleep(s.client.reconnect)
 			}
 		case <-s.stopch:
-			log.Printf("shutting down ...")
+			log.Infof("shutting down ...")
 			s.conn.Close()
 			break
 		}
