@@ -76,6 +76,7 @@ func (c *Client) Handle(msg *msgbus.Message) error {
 	}
 
 	os.Stdout.Write(out)
+	os.Stdout.Write([]byte{'\r', '\n'})
 	return nil
 }
 
