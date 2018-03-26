@@ -105,20 +105,27 @@ func (c *Client) Pull(topic string) {
 		}
 
 		if res.StatusCode == http.StatusNotFound {
+			// Empty queue
 			break
 		}
 
 		defer res.Body.Close()
 		err = json.NewDecoder(res.Body).Decode(&msg)
 		if err != nil {
-			log.Printf(
+			log.Errorf(
 				"error decoding response from %s for %s: %s",
 				url, topic, err,
 			)
-			time.Sleep(c.retry)
 			break
 		} else {
-			c.Handle(msg)
+			err := c.Handle(msg)
+			if err != nil {
+				log.Errorf(
+					"error handling message from %s for %s: %s",
+					url, topic, err,
+				)
+			}
+			break
 		}
 	}
 }
