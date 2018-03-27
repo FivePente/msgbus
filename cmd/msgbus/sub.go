@@ -38,7 +38,7 @@ func subscribe(client *client.Client, topic string) {
 		topic = defaultTopic
 	}
 
-	s := client.Subscribe(topic)
+	s := client.Subscribe(topic, nil)
 	go s.Run()
 
 	sigs := make(chan os.Signal, 1)

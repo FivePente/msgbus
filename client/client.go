@@ -24,6 +24,9 @@ const (
 	DefaultRetryInterval = 5
 )
 
+// HandlerFunc ...
+type HandlerFunc func(msg *msgbus.Message) error
+
 // Client ...
 type Client struct {
 	url string
@@ -155,13 +158,8 @@ func (c *Client) Publish(topic, message string) error {
 }
 
 // Subscribe ...
-func (c *Client) Subscribe(topic string) *Subscriber {
-	return &Subscriber{
-		client: c,
-		topic:  topic,
-		errch:  make(chan error),
-		stopch: make(chan bool),
-	}
+func (c *Client) Subscribe(topic string, handler HandlerFunc) *Subscriber {
+	return NewSubscriber(c, topic, handler)
 }
 
 // Subscriber ...
@@ -169,10 +167,25 @@ type Subscriber struct {
 	conn   *websocket.Conn
 	client *Client
 
-	topic string
+	topic   string
+	handler HandlerFunc
 
 	errch  chan error
 	stopch chan bool
+}
+
+// NewSubscriber ...
+func NewSubscriber(client *Client, topic string, handler HandlerFunc) *Subscriber {
+	if handler == nil {
+		handler = client.Handle
+	}
+	return &Subscriber{
+		client:  client,
+		topic:   topic,
+		handler: handler,
+		errch:   make(chan error),
+		stopch:  make(chan bool),
+	}
 }
 
 // Stop ...
@@ -231,6 +244,6 @@ func (s *Subscriber) Reader() {
 			s.errch <- err
 			break
 		}
-		s.client.Handle(msg)
+		s.handler(msg)
 	}
 }
