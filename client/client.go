@@ -244,6 +244,9 @@ func (s *Subscriber) Reader() {
 			s.errch <- err
 			break
 		}
-		s.handler(msg)
+		err = s.handler(msg)
+		if err != nil {
+			log.Errorf("error handling message: %s", err)
+		}
 	}
 }
