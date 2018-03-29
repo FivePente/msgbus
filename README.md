@@ -129,7 +129,7 @@ Pull the messages off the "hello" queue using `curl`:
 
 ```#!bash
 $ curl -q -o - http://localhost:8000/hello
-{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","expires":"0001-01-01T00:00:00Z","created":"2018-03-25T13:18:38.732465-07:00"}
+{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","created":"2018-03-25T13:18:38.732465-07:00"}
 ```
 
 Decode the payload:
@@ -177,7 +177,7 @@ Example:
 
 ```#!bash
 $ curl -q -o - http://localhost:8000/hello
-{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","expires":"0001-01-01T00:00:00Z","created":"2018-03-25T13:18:38.732465-07:00"}
+{"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","created":"2018-03-25T13:18:38.732465-07:00"}
 ```
 
 ## DELETE /<topic>

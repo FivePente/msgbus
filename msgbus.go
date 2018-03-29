@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	// DefaultTTL is the default TTL (time to live) for newly created topics
 	DefaultTTL = 60 * time.Second
 )
 
@@ -29,7 +30,6 @@ type Message struct {
 	ID      uint64    `json:"id"`
 	Topic   *Topic    `json:"topic"`
 	Payload []byte    `json:"payload"`
-	Expires time.Time `json:"expires"`
 	Created time.Time `json:"created"`
 }
 
