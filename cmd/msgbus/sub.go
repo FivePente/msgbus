@@ -14,8 +14,9 @@ import (
 
 // subCmd represents the pub command
 var subCmd = &cobra.Command{
-	Use:   "sub [flags] <topic>",
-	Short: "Subscribe to a topic",
+	Use:     "sub [flags] <topic>",
+	Aliases: []string{"reg"},
+	Short:   "Subscribe to a topic",
 	Long: `This subscribes to the given topic and for every message published
 to the topic, the message is printed to standard output.`,
 	Args: cobra.MinimumNArgs(1),

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,6 +24,13 @@ const (
 
 	// DefaultRetryInterval ...
 	DefaultRetryInterval = 5
+)
+
+var (
+	// PublishedRegexp ...
+	PublishedRegexp = regexp.MustCompile(
+		"message successfully published to \\w+ with sequence \\d",
+	)
 )
 
 // HandlerFunc ...
@@ -93,17 +102,14 @@ func (c *Client) Pull(topic string) {
 	for {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Printf(
-				"error constructing pull request to %s: %s",
-				url, err,
-			)
+			log.Printf("error constructing request to %s: %s", url, err)
 			time.Sleep(c.retry)
 			continue
 		}
 
 		res, err := client.Do(req)
 		if err != nil {
-			log.Printf("error sending pull request to %s: %s", url, err)
+			log.Printf("error sending request to %s: %s", url, err)
 			time.Sleep(c.retry)
 			continue
 		}
@@ -146,12 +152,25 @@ func (c *Client) Publish(topic, message string) error {
 
 	req, err := http.NewRequest("PUT", url, &payload)
 	if err != nil {
-		return err
+		return fmt.Errorf("error constructing request: %s", err)
 	}
 
-	_, err = client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("error publishing message: %s", err)
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("unexpected non-200 response: %s", res.Status)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response: %s", err)
+	}
+
+	if !PublishedRegexp.Match(body) {
+		return fmt.Errorf("unexpected non-matching response: %s", body)
 	}
 
 	return nil

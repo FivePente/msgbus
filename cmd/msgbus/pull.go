@@ -9,8 +9,9 @@ import (
 
 // pullCmd represents the pub command
 var pullCmd = &cobra.Command{
-	Use:   "pull [flags] <topic>",
-	Short: "Pulls a message from a given topic",
+	Use:     "pull [flags] <topic>",
+	Aliases: []string{"get"},
+	Short:   "Pulls a message from a given topic",
 	Long: `This pulls a message from the given topic if there are any messages
 and prints the message to standard output. Otherwise if the queue for the
 given topic is empty, this does nothing.

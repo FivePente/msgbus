@@ -13,8 +13,9 @@ import (
 
 // pubCmd represents the pub command
 var pubCmd = &cobra.Command{
-	Use:   "pub [flags] <topic> [<message>|-]",
-	Short: "Publish a new message",
+	Use:     "pub [flags] <topic> [<message>|-]",
+	Aliases: []string{"put"},
+	Short:   "Publish a new message",
 	Long: `This publishes a new message either from positional command-line
 arguments or from standard input if - is used as the first and only argument.
 

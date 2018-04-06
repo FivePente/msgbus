@@ -2,6 +2,7 @@ package msgbus
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -240,9 +241,11 @@ func (mb *MessageBus) Unsubscribe(id, topic string) {
 
 func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" && (r.URL.Path == "/" || r.URL.Path == "") {
+		// XXX: guard with a mutex?
 		out, err := json.Marshal(mb.topics)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("error serializing topics: %s", err)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
@@ -260,10 +263,19 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "POST", "PUT":
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("error reading payload: %s", err)
+			http.Error(w, msg, http.StatusBadRequest)
 			return
 		}
-		mb.Put(mb.NewMessage(t, body))
+
+		message := mb.NewMessage(t, body)
+		mb.Put(message)
+
+		msg := fmt.Sprintf(
+			"message successfully published to %s with sequence %d",
+			t.Name, t.Sequence,
+		)
+		w.Write([]byte(msg))
 	case "GET":
 		if r.Header.Get("Upgrade") == "websocket" {
 			NewClient(t, mb).Handler().ServeHTTP(w, r)
@@ -273,13 +285,15 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		message, ok := mb.Get(t)
 
 		if !ok {
-			http.Error(w, "Not Found", http.StatusNotFound)
+			msg := fmt.Sprintf("no messages enqueued for topic: %s", topic)
+			http.Error(w, msg, http.StatusNotFound)
 			return
 		}
 
 		out, err := json.Marshal(message)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("error serializing message: %s", err)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
