@@ -34,6 +34,17 @@ func TestMessageGetEmpty(t *testing.T) {
 	assert.Equal(t, msg, Message{})
 }
 
+func TestMessageBusPutGet(t *testing.T) {
+	mb := NewMessageBus(nil)
+	topic := mb.NewTopic("foo")
+	expected := Message{Topic: topic, Payload: []byte("foo")}
+	mb.Put(expected)
+
+	actual, ok := mb.Get(topic)
+	assert.True(t, ok)
+	assert.Equal(t, actual, expected)
+}
+
 func BenchmarkMessageBusPut(b *testing.B) {
 	mb := NewMessageBus(nil)
 	topic := mb.NewTopic("foo")

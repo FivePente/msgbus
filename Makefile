@@ -37,6 +37,9 @@ image:
 	@docker build --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(REPO):$(TAG) .
 	@echo "Image created: $(REPO):$(TAG)"
 
+bench:
+	@go test -v -bench=. $(TEST_ARGS)
+
 test:
 	@go test -v -cover -race $(TEST_ARGS)
 
