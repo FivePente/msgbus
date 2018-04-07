@@ -4,6 +4,7 @@
 [![CodeCov](https://codecov.io/gh/prologic/msgbus/branch/master/graph/badge.svg)](https://codecov.io/gh/prologic/msgbus)
 [![Go Report Card](https://goreportcard.com/badge/prologic/msgbus)](https://goreportcard.com/report/prologic/msgbus)
 [![GoDoc](https://godoc.org/github.com/prologic/msgbus?status.svg)](https://godoc.org/github.com/prologic/msgbus) 
+[![](https://images.microbadger.com/badges/version/prologic/msgbus.svg)](https://microbadger.com/images/prologic/msgbus "Get your own version badge on microbadger.com")
 
 A real-time message bus server and library written in Go with strong
 consistency and reliability guarantees.
