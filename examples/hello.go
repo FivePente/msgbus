@@ -18,7 +18,7 @@ func main() {
 	}
 
 	log.Printf(
-		"Received message: id=%s topic=%s payload=%s",
-		msg.ID, msg.Topic, msg.Payload,
+		"Received message: id=%d topic=%s payload=%s",
+		msg.ID, msg.Topic.Name, msg.Payload,
 	)
 }
