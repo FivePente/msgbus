@@ -33,9 +33,6 @@ var (
 	)
 )
 
-// HandlerFunc ...
-type HandlerFunc func(msg *msgbus.Message) error
-
 // Client ...
 type Client struct {
 	url string
@@ -177,7 +174,7 @@ func (c *Client) Publish(topic, message string) error {
 }
 
 // Subscribe ...
-func (c *Client) Subscribe(topic string, handler HandlerFunc) *Subscriber {
+func (c *Client) Subscribe(topic string, handler msgbus.HandlerFunc) *Subscriber {
 	return NewSubscriber(c, topic, handler)
 }
 
@@ -187,14 +184,14 @@ type Subscriber struct {
 	client *Client
 
 	topic   string
-	handler HandlerFunc
+	handler msgbus.HandlerFunc
 
 	errch  chan error
 	stopch chan bool
 }
 
 // NewSubscriber ...
-func NewSubscriber(client *Client, topic string, handler HandlerFunc) *Subscriber {
+func NewSubscriber(client *Client, topic string, handler msgbus.HandlerFunc) *Subscriber {
 	if handler == nil {
 		handler = client.Handle
 	}

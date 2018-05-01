@@ -19,6 +19,9 @@ const (
 	DefaultTTL = 60 * time.Second
 )
 
+// HandlerFunc ...
+type HandlerFunc func(msg *Message) error
+
 // Topic ...
 type Topic struct {
 	Name     string        `json:"name"`
