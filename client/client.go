@@ -224,7 +224,12 @@ func (s *Subscriber) Run() {
 		log.Fatal("invalid url: %s", s.client.url)
 	}
 
-	u.Scheme = "ws"
+	if strings.HasPrefix(s.client.url, "https") {
+		u.Scheme = "wss"
+	} else {
+		u.Scheme = "ws"
+	}
+
 	u.Path += fmt.Sprintf("/%s", s.topic)
 
 	url := u.String()
