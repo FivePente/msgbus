@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/websocket"
 
 	"github.com/prologic/msgbus"
 )
@@ -39,8 +39,6 @@ type Client struct {
 
 	retry     time.Duration
 	reconnect time.Duration
-
-	ws *websocket.Conn
 }
 
 // Options ...
@@ -214,8 +212,6 @@ func (s *Subscriber) Stop() {
 func (s *Subscriber) Run() {
 	var err error
 
-	origin := "http://localhost/"
-
 	u, err := url.Parse(s.client.url)
 	if err != nil {
 		log.Fatal("invalid url: %s", s.client.url)
@@ -232,11 +228,18 @@ func (s *Subscriber) Run() {
 	url := u.String()
 
 	for {
-		s.conn, err = websocket.Dial(url, "", origin)
+		s.conn, _, err = websocket.DefaultDialer.Dial(url, nil)
 		if err != nil {
 			log.Warnf("error connecting to %s: %s", url, err)
-			time.Sleep(s.client.reconnect)
-			continue
+
+			select {
+			case <-time.After(s.client.reconnect):
+				continue
+			case <-s.stopch:
+				log.Infof("shutting down ...")
+				s.conn.Close()
+				break
+			}
 		}
 
 		go s.Reader()
@@ -260,7 +263,7 @@ func (s *Subscriber) Reader() {
 	var msg *msgbus.Message
 
 	for {
-		err := websocket.JSON.Receive(s.conn, &msg)
+		err := s.conn.ReadJSON(&msg)
 		if err != nil {
 			s.errch <- err
 			break

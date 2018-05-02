@@ -11,13 +11,22 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 )
 
 const (
 	// DefaultTTL is the default TTL (time to live) for newly created topics
 	DefaultTTL = 60 * time.Second
 )
+
+// TODO: Make this configurable?
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 // HandlerFunc ...
 type HandlerFunc func(msg *Message) error
@@ -281,7 +290,13 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(msg))
 	case "GET":
 		if r.Header.Get("Upgrade") == "websocket" {
-			NewClient(t, mb).Handler().ServeHTTP(w, r)
+			conn, err := upgrader.Upgrade(w, r, nil)
+			if err != nil {
+				log.Errorf("error creating websocket client: %s", err)
+				return
+			}
+
+			NewClient(conn, t, mb).Start()
 			return
 		}
 
@@ -309,36 +324,37 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Client ...
 type Client struct {
+	conn  *websocket.Conn
 	topic *Topic
 	bus   *MessageBus
-	id    string
-	ch    chan Message
+
+	id string
+	ch chan Message
 }
 
 // NewClient ...
-func NewClient(topic *Topic, bus *MessageBus) *Client {
-	return &Client{topic: topic, bus: bus}
+func NewClient(conn *websocket.Conn, topic *Topic, bus *MessageBus) *Client {
+	return &Client{conn: conn, topic: topic, bus: bus}
 }
 
-// Handler ...
-func (c *Client) Handler() websocket.Handler {
-	return func(conn *websocket.Conn) {
-		c.id = conn.Request().RemoteAddr
-		c.ch = c.bus.Subscribe(c.id, c.topic.Name)
-		defer func() {
-			c.bus.Unsubscribe(c.id, c.topic.Name)
-		}()
+// Start ...
+func (c *Client) Start() {
+	c.id = c.conn.RemoteAddr().String()
+	c.ch = c.bus.Subscribe(c.id, c.topic.Name)
+	defer func() {
+		c.bus.Unsubscribe(c.id, c.topic.Name)
+	}()
 
-		var err error
+	var err error
 
-		for {
-			msg := <-c.ch
-			err = websocket.JSON.Send(conn, msg)
-			if err != nil {
-				// TODO: Retry? Put the message back in the queue?
-				log.Errorf("Error sending msg to %s", c.id)
-				continue
-			}
+	for {
+		msg := <-c.ch
+		err = c.conn.WriteJSON(msg)
+		if err != nil {
+			// TODO: Retry? Put the message back in the queue?
+			// TODO: Bump a counter (Prometheus)
+			log.Errorf("Error sending msg to %s", c.id)
+			continue
 		}
 	}
 }
