@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	var (
 		version bool
 		debug   bool
@@ -40,8 +39,46 @@ func main() {
 		os.Exit(0)
 	}
 
+	metrics := msgbus.NewMetrics("msgbus")
+
+	ctime := time.Now()
+
+	// server uptime counter
+	metrics.NewCounterFunc(
+		"server", "uptime",
+		"Number of nanoseconds the server has been running",
+		func() float64 {
+			return float64(time.Since(ctime).Nanoseconds())
+		},
+	)
+
+	// server requests counter
+	metrics.NewCounter(
+		"http", "requests",
+		"Number of total HTTP requests processed",
+	)
+
+	// bus messages counter
+	metrics.NewCounter(
+		"bus", "messages",
+		"Number of total messages exchanged",
+	)
+
+	// bus topics gauge
+	metrics.NewCounter(
+		"bus", "topics",
+		"Number of active topics registered",
+	)
+
+	// bus subscribers gauge
+	metrics.NewGauge(
+		"bus", "subscribers",
+		"Number of active subscribers",
+	)
+
 	options := msgbus.Options{DefaultTTL: ttl}
-	http.Handle("/", msgbus.NewMessageBus(&options))
+	http.Handle("/", msgbus.NewMessageBus(metrics, &options))
+	http.Handle("/metrics", metrics.Handler())
 	log.Infof("msgbusd %s listening on %s", msgbus.FullVersion(), bind)
 	log.Fatal(http.ListenAndServe(bind, nil))
 }

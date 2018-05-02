@@ -107,6 +107,8 @@ type Options struct {
 type MessageBus struct {
 	sync.Mutex
 
+	metrics *Metrics
+
 	ttl       time.Duration
 	topics    map[string]*Topic
 	queues    map[*Topic]*Queue
@@ -114,7 +116,7 @@ type MessageBus struct {
 }
 
 // NewMessageBus ...
-func NewMessageBus(options *Options) *MessageBus {
+func NewMessageBus(metrics *Metrics, options *Options) *MessageBus {
 	var ttl time.Duration
 
 	if options != nil {
@@ -124,6 +126,8 @@ func NewMessageBus(options *Options) *MessageBus {
 	}
 
 	return &MessageBus{
+		metrics: metrics,
+
 		ttl:       ttl,
 		topics:    make(map[string]*Topic),
 		queues:    make(map[*Topic]*Queue),
@@ -145,6 +149,7 @@ func (mb *MessageBus) NewTopic(topic string) *Topic {
 	if !ok {
 		t = &Topic{Name: topic, TTL: mb.ttl, Created: time.Now()}
 		mb.topics[topic] = t
+		mb.metrics.Counter("bus", "topics").Inc()
 	}
 	return t
 }
@@ -153,6 +158,7 @@ func (mb *MessageBus) NewTopic(topic string) *Topic {
 func (mb *MessageBus) NewMessage(topic *Topic, payload []byte) Message {
 	defer func() {
 		topic.Sequence++
+		mb.metrics.Counter("bus", "messages").Inc()
 	}()
 
 	return Message{
@@ -211,6 +217,10 @@ func (mb *MessageBus) NotifyAll(message Message) {
 
 // Subscribe ...
 func (mb *MessageBus) Subscribe(id, topic string) chan Message {
+	defer func() {
+		mb.metrics.Gauge("bus", "subscribers").Inc()
+	}()
+
 	log.Debugf("[msgbus] Subscribe id=%s topic=%s", id, topic)
 	t, ok := mb.topics[topic]
 	if !ok {
@@ -234,6 +244,10 @@ func (mb *MessageBus) Subscribe(id, topic string) chan Message {
 
 // Unsubscribe ...
 func (mb *MessageBus) Unsubscribe(id, topic string) {
+	defer func() {
+		mb.metrics.Gauge("bus", "subscribers").Dec()
+	}()
+
 	log.Debugf("[msgbus] Unsubscribe id=%s topic=%s", id, topic)
 	t, ok := mb.topics[topic]
 	if !ok {
@@ -252,6 +266,10 @@ func (mb *MessageBus) Unsubscribe(id, topic string) {
 }
 
 func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		mb.metrics.Counter("http", "requests").Inc()
+	}()
+
 	if r.Method == "GET" && (r.URL.Path == "/" || r.URL.Path == "") {
 		// XXX: guard with a mutex?
 		out, err := json.Marshal(mb.topics)
@@ -319,6 +337,7 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write(out)
 	case "DELETE":
 		http.Error(w, "Not Implemented", http.StatusNotImplemented)
+		// TODO: Implement deleting topics
 	}
 }
 

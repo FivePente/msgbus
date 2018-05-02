@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	m := msgbus.NewMessageBus(nil)
+	m := msgbus.NewMessageBus(msgbus.NewMetrics("msgbus"), nil)
 	t := m.NewTopic("foo")
 	m.Put(m.NewMessage(t, []byte("Hello World!")))
 
