@@ -204,8 +204,21 @@ func NewSubscriber(client *Client, topic string, handler msgbus.HandlerFunc) *Su
 
 // Stop ...
 func (s *Subscriber) Stop() {
+	log.Infof("shutting down ...")
+
 	close(s.errch)
+	s.errch = nil
 	s.stopch <- true
+
+	err := s.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		log.Warnf("error sending close message: %s", err)
+	}
+
+	err = s.conn.Close()
+	if err != nil {
+		log.Warnf("error closing connection: %s", err)
+	}
 }
 
 // Run ...
@@ -236,7 +249,6 @@ func (s *Subscriber) Run() {
 			case <-time.After(s.client.reconnect):
 				continue
 			case <-s.stopch:
-				log.Infof("shutting down ...")
 				s.conn.Close()
 				break
 			}
@@ -251,8 +263,6 @@ func (s *Subscriber) Run() {
 				time.Sleep(s.client.reconnect)
 			}
 		case <-s.stopch:
-			log.Infof("shutting down ...")
-			s.conn.Close()
 			break
 		}
 	}
@@ -265,7 +275,9 @@ func (s *Subscriber) Reader() {
 	for {
 		err := s.conn.ReadJSON(&msg)
 		if err != nil {
-			s.errch <- err
+			if s.errch != nil {
+				s.errch <- err
+			}
 			break
 		}
 		err = s.handler(msg)
