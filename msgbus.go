@@ -106,8 +106,16 @@ func (ls *Listeners) Get(id string) (chan Message, bool) {
 
 // NotifyAll ...
 func (ls *Listeners) NotifyAll(message Message) {
-	for _, ch := range ls.chs {
-		ch <- message
+	for id, ch := range ls.chs {
+		select {
+		case ch <- message:
+			log.Debugf("successfully published message to %s", message, id)
+		default:
+			// TODO: Bump a counter?
+			// TODO: Drop this client?
+			// TODO: Retry later?
+			log.Warnf("cannot publish message to %s", message, id)
+		}
 	}
 }
 
