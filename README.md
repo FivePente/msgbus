@@ -17,6 +17,20 @@ consistency and reliability guarantees.
 $ go install github.com/prologic/msgbus/...
 ```
 
+## Use Cases
+
+* As a simple generic webhook
+
+You can use msgbus as a simple generic webhook. For example in my
+[dockerfiles](https://github.com/prologic/dockerfiles) repo I have hooked up
+[Prometheus](https://prometheus.io/)'s [AlertManager](https://prometheus.io/docs/alerting/alertmanager/)
+to send alert notifications to an IRC channel using some simple shell scripts.
+
+See: [alert](https://hub.docker.com/r/prologic/alert/)
+
+* As a general-purpose message / event bus that supports pub/sub as well as
+  pulling messages synchronously.
+
 ## Usage (library)
 
 Install the package into your project:
