@@ -519,6 +519,7 @@ func (c *Client) readPump() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
 				log.Errorf("unexpected close error from %s: %v", c.id, err)
+				c.bus.Unsubscribe(c.id, c.topic.Name)
 			}
 			break
 		}
