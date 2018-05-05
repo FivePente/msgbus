@@ -88,7 +88,7 @@ func subscribe(client *client.Client, topic, command string) {
 	}
 
 	s := client.Subscribe(topic, handler(command))
-	go s.Run()
+	s.Start()
 
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
