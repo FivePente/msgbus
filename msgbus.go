@@ -115,12 +115,12 @@ func (ls *Listeners) NotifyAll(message Message) int {
 	for id, ch := range ls.chs {
 		select {
 		case ch <- message:
-			log.Debugf("successfully published message to %s: %#v", id, message)
+			log.Debugf("successfully published message to %s: %+v", id, message)
 			i++
 		default:
 			// TODO: Drop this client?
 			// TODO: Retry later?
-			log.Warnf("cannot publish message to %s: %#v", id, message)
+			log.Warnf("cannot publish message to %s: %+v", id, message)
 		}
 	}
 
