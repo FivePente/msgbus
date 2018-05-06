@@ -237,9 +237,7 @@ func (s *Subscriber) connect() {
 	for {
 		d := b.Duration()
 
-		s.Lock()
 		conn, _, err := websocket.DefaultDialer.Dial(s.url, nil)
-		s.Unlock()
 
 		if err != nil {
 			log.Warnf("error connecting to %s: %s", s.url, err)
@@ -250,7 +248,9 @@ func (s *Subscriber) connect() {
 
 		log.Infof("successfully connected to %s", s.url)
 
+		s.Lock()
 		s.conn = conn
+		s.Unlock()
 
 		go s.readLoop()
 
