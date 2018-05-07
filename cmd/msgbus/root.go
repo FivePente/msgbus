@@ -25,6 +25,14 @@ var RootCmd = &cobra.Command{
 This lets you publish, subscribe and pull messages from a running msgbusd
 instance. This is the reference implementation of using the msgbus client
 library for publishing and subscribing to topics.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// set logging level
+		if viper.GetBool("debug") {
+			log.SetLevel(log.DebugLevel)
+		} else {
+			log.SetLevel(log.InfoLevel)
+		}
+	},
 }
 
 // Execute adds all child commands to the root command
@@ -60,13 +68,6 @@ func init() {
 
 	viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
 	viper.SetDefault("debug", false)
-
-	// set logging level
-	if viper.GetBool("debug") {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
 }
 
 // initConfig reads in config file and ENV variables if set.
