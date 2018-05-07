@@ -261,12 +261,6 @@ func (s *Subscriber) connect() {
 
 		log.Infof("successfully connected to %s", s.url)
 
-		conn.SetCloseHandler(func(code int, text string) error {
-			log.Debugf("recieved close from server %s: (%d) %s", s.url, code, text)
-			s.closeAndReconnect()
-			return nil
-		})
-
 		s.Lock()
 		s.conn = conn
 		s.Unlock()
