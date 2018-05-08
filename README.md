@@ -167,7 +167,7 @@ $ curl -q -o - http://localhost:8000/
 hello
 ```
 
-## POST|PUT /<topic>
+## POST|PUT /topic
 
 Post a new message to the queue named by `<topic>`.
 
@@ -179,7 +179,7 @@ Example:
 $ curl -q -o - -X PUT -d '{"message": "hello"}' http://localhost:8000/hello
 ```
 
-## GET /<topic>
+## GET /topic
 
 Get the next message of the queue named by `<topic>`.
 
@@ -195,7 +195,7 @@ $ curl -q -o - http://localhost:8000/hello
 {"id":0,"topic":{"name":"hello","ttl":60000000000,"seq":1,"created":"2018-03-25T13:18:38.732437-07:00"},"payload":"eyJtZXNzYWdlIjogImhlbGxvIn0=","created":"2018-03-25T13:18:38.732465-07:00"}
 ```
 
-## DELETE /<topic>
+## DELETE /topic
 
 Deletes a queue named by `<topic>`.
 
