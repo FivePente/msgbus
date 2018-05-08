@@ -163,8 +163,15 @@ List all known topics/queues.
 Example:
 
 ```#!bash
-$ curl -q -o - http://localhost:8000/
-hello
+$ curl -q -o - http://localhost:8000/ | jq '.'
+{
+  "hello": {
+    "name": "hello",
+    "ttl": 60000000000,
+    "seq": 1,
+    "created": "2018-05-07T23:44:25.681392205-07:00"
+  }
+}
 ```
 
 ## POST|PUT /topic
@@ -177,6 +184,7 @@ Example:
 
 ```#!bash
 $ curl -q -o - -X PUT -d '{"message": "hello"}' http://localhost:8000/hello
+message successfully published to hello with sequence 1
 ```
 
 ## GET /topic
