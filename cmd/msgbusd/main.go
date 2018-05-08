@@ -43,7 +43,7 @@ func main() {
 		DefaultTTL:  ttl,
 		WithMetrics: true,
 	}
-	mb := msgbus.NewMessageBus(&opts)
+	mb := msgbus.New(&opts)
 
 	http.Handle("/", mb)
 	http.Handle("/metrics", mb.Metrics().Handler())
