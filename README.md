@@ -6,10 +6,15 @@
 [![GoDoc](https://godoc.org/github.com/prologic/msgbus?status.svg)](https://godoc.org/github.com/prologic/msgbus) 
 [![](https://images.microbadger.com/badges/image/prologic/msgbus.svg)](https://microbadger.com/images/prologic/msgbus "Get your own image badge on microbadger.com")
 
-A real-time message bus server and library written in Go with strong
-consistency and reliability guarantees.
+A real-time message bus server and library written in Go.
 
-(*eventual goals of distributed high-availability and sharding*)
+## Features
+
+* Simple HTTP API
+* Simple command-line client
+* In memory queues
+* WebSockets for real-time messages
+* Pull and Push model
 
 ## Install
 
@@ -195,16 +200,6 @@ $ curl -q -o - http://localhost:8000/hello
 Deletes a queue named by `<topic>`.
 
 *Not implemented*.
-
-## Design
-
-Design decisions so far:
-
-* In memory queues (*may extend this with interfaces and persistence*)
-* HTTP API
-* Websockets for real-time push of events
-* Sequence ID Message tracking
-* Pull and Push model
 
 ## License
 
