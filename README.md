@@ -56,7 +56,7 @@ import (
 )
 
 func main() {
-    m := msgbus.NewMessageBus()
+    m := msgbus.New()
     m.Put("foo", m.NewMessage([]byte("Hello World!")))
 
     msg, ok := m.Get("foo")

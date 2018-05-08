@@ -142,8 +142,8 @@ type MessageBus struct {
 	listeners map[*Topic]*Listeners
 }
 
-// NewMessageBus ...
-func NewMessageBus(options *Options) *MessageBus {
+// New ...
+func New(options *Options) *MessageBus {
 	var (
 		ttl         time.Duration
 		withMetrics bool
