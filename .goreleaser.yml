@@ -1,0 +1,41 @@
+builds:
+  - 
+    main: ./cmd/msgbusd/
+    binary: msgbusd
+    flags: -tags "static_build"
+    ldflags: -w -X msgbus.Version={{.Version}} -X msgbus.Commit={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - freebsd
+      - linux
+    goarch:
+      - i386
+      - amd64
+      - arm
+      - amd64
+    goarm:
+      - 6
+      - 7
+  - 
+    main: ./cmd/msgbus/
+    binary: msgbus
+    flags: -tags "static_build"
+    ldflags: -w -X msgbus.Version={{.Version}} -X msgbus.Commit={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - freebsd
+      - linux
+    goarch:
+      - i386
+      - amd64
+      - arm
+      - amd64
+    goarm:
+      - 6
+      - 7
+sign:
+  artifacts: checksum

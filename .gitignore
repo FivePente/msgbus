@@ -1,4 +1,5 @@
 *~*
+dist
 *.bak
 coverage.txt
 cmd/msgbus/msgbus
