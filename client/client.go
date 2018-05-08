@@ -36,9 +36,6 @@ const (
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
-	maxMessageSize = 2048
 )
 
 var (
@@ -275,7 +272,6 @@ func (s *Subscriber) connect() {
 func (s *Subscriber) readLoop() {
 	var msg *msgbus.Message
 
-	s.conn.SetReadLimit(maxMessageSize)
 	s.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 	s.conn.SetPongHandler(func(message string) error {
