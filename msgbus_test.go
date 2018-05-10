@@ -1,8 +1,16 @@
 package msgbus
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,6 +51,117 @@ func TestMessageBusPutGet(t *testing.T) {
 	actual, ok := mb.Get(topic)
 	assert.True(t, ok)
 	assert.Equal(t, actual, expected)
+}
+
+func TestServeHTTPGETEmpty(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/", nil)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+	assert.Equal(w.Body.String(), "{}")
+}
+
+func TestServeHTTPPOST(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+	w := httptest.NewRecorder()
+	b := bytes.NewBufferString("hello world")
+	r, _ := http.NewRequest("POST", "/hello", b)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
+}
+
+func TestServeHTTPPUT(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+	w := httptest.NewRecorder()
+	b := bytes.NewBufferString("hello world")
+	r, _ := http.NewRequest("PUT", "/hello", b)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
+}
+
+func TestServeHTTPSimple(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+
+	w := httptest.NewRecorder()
+	b := bytes.NewBufferString("hello world")
+	r, _ := http.NewRequest("POST", "/hello", b)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
+
+	w = httptest.NewRecorder()
+	r, _ = http.NewRequest("GET", "/hello", nil)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+
+	var msg *Message
+	json.Unmarshal(w.Body.Bytes(), &msg)
+	assert.Equal(msg.ID, uint64(0))
+	assert.Equal(msg.Topic.Name, "hello")
+	assert.Equal(msg.Payload, []byte("hello world"))
+}
+
+func TestServeHTTPSubscriber(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+
+	s := httptest.NewServer(mb)
+	defer s.Close()
+
+	msgs := make(chan *Message)
+	ready := make(chan bool, 1)
+
+	consumer := func() {
+		var msg *Message
+
+		u := fmt.Sprintf("ws%s/hello", strings.TrimPrefix(s.URL, "http"))
+
+		ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+		assert.NoError(err)
+		defer ws.Close()
+
+		ready <- true
+
+		err = ws.ReadJSON(&msg)
+		ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+
+		msgs <- msg
+	}
+
+	go consumer()
+
+	<-ready
+
+	c := s.Client()
+	b := bytes.NewBufferString("hello world")
+	r, err := c.Post(s.URL+"/hello", "text/plain", b)
+	assert.NoError(err)
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	assert.NoError(err)
+	assert.Regexp(`message successfully published to hello with sequence \d+`, string(body))
+
+	msg := <-msgs
+	assert.Equal(msg.ID, uint64(0))
+	assert.Equal(msg.Topic.Name, "hello")
+	assert.Equal(msg.Payload, []byte("hello world"))
 }
 
 func BenchmarkMessageBusPut(b *testing.B) {
