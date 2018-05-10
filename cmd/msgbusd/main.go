@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -14,17 +13,20 @@ import (
 
 func main() {
 	var (
-		version bool
-		debug   bool
-		bind    string
-		ttl     time.Duration
+		version        bool
+		debug          bool
+		bind           string
+		maxQueueSize   int
+		maxPayloadSize int
 	)
 
 	flag.BoolVar(&version, "v", false, "display version information")
 	flag.BoolVar(&debug, "d", false, "enable debug logging")
 
 	flag.StringVar(&bind, "bind", ":8000", "interface and port to bind to")
-	flag.DurationVar(&ttl, "ttl", 60*time.Second, "default ttl")
+
+	flag.IntVar(&maxQueueSize, "max-queue-size", msgbus.DefaultMaxQueueSize, "maximum queue size")
+	flag.IntVar(&maxPayloadSize, "max-payload-size", msgbus.DefaultMaxPayloadSize, "maximum payload size")
 
 	flag.Parse()
 
@@ -40,8 +42,9 @@ func main() {
 	}
 
 	opts := msgbus.Options{
-		DefaultTTL:  ttl,
-		WithMetrics: true,
+		MaxQueueSize:   maxQueueSize,
+		MaxPayloadSize: maxPayloadSize,
+		WithMetrics:    true,
 	}
 	mb := msgbus.New(&opts)
 

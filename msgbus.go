@@ -16,8 +16,11 @@ import (
 )
 
 const (
-	// DefaultTTL is the default TTL (time to live) for newly created topics
-	DefaultTTL = 60 * time.Second
+	// DefaultMaxQueueSize is the default maximum size of queues
+	DefaultMaxQueueSize = 1000 // ~4MB per queue (1000 * 4KB)
+
+	// DefaultMaxPayloadSize is the default maximum payload size
+	DefaultMaxPayloadSize = 4096 // 4KB
 
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
@@ -43,10 +46,9 @@ type HandlerFunc func(msg *Message) error
 
 // Topic ...
 type Topic struct {
-	Name     string        `json:"name"`
-	TTL      time.Duration `json:"ttl"`
-	Sequence uint64        `json:"seq"`
-	Created  time.Time     `json:"created"`
+	Name     string    `json:"name"`
+	Sequence uint64    `json:"seq"`
+	Created  time.Time `json:"created"`
 }
 
 // Message ...
@@ -126,8 +128,9 @@ func (ls *Listeners) NotifyAll(message Message) int {
 
 // Options ...
 type Options struct {
-	DefaultTTL  time.Duration
-	WithMetrics bool
+	MaxQueueSize   int
+	MaxPayloadSize int
+	WithMetrics    bool
 }
 
 // MessageBus ...
@@ -136,7 +139,9 @@ type MessageBus struct {
 
 	metrics *Metrics
 
-	ttl       time.Duration
+	maxQueueSize   int
+	maxPayloadSize int
+
 	topics    map[string]*Topic
 	queues    map[*Topic]*Queue
 	listeners map[*Topic]*Listeners
@@ -145,15 +150,18 @@ type MessageBus struct {
 // New ...
 func New(options *Options) *MessageBus {
 	var (
-		ttl         time.Duration
-		withMetrics bool
+		maxQueueSize   int
+		maxPayloadSize int
+		withMetrics    bool
 	)
 
 	if options != nil {
-		ttl = options.DefaultTTL
+		maxQueueSize = options.MaxQueueSize
+		maxPayloadSize = options.MaxPayloadSize
 		withMetrics = options.WithMetrics
 	} else {
-		ttl = DefaultTTL
+		maxQueueSize = DefaultMaxQueueSize
+		maxPayloadSize = DefaultMaxPayloadSize
 		withMetrics = false
 	}
 
@@ -221,10 +229,18 @@ func New(options *Options) *MessageBus {
 			"Number of active topics registered",
 		)
 
-		// bus queues gauge vec
+		// queue len gauge vec
 		metrics.NewGaugeVec(
-			"bus", "queues",
-			"Queue depths of each topic",
+			"queue", "len",
+			"Queue length of each topic",
+			[]string{"topic"},
+		)
+
+		// queue size gauge vec
+		// TODO: Implement this gauge by somehow getting queue sizes per topic!
+		metrics.NewGaugeVec(
+			"queue", "size",
+			"Queue length of each topic",
 			[]string{"topic"},
 		)
 
@@ -238,7 +254,9 @@ func New(options *Options) *MessageBus {
 	return &MessageBus{
 		metrics: metrics,
 
-		ttl:       ttl,
+		maxQueueSize:   maxQueueSize,
+		maxPayloadSize: maxPayloadSize,
+
 		topics:    make(map[string]*Topic),
 		queues:    make(map[*Topic]*Queue),
 		listeners: make(map[*Topic]*Listeners),
@@ -262,7 +280,7 @@ func (mb *MessageBus) NewTopic(topic string) *Topic {
 
 	t, ok := mb.topics[topic]
 	if !ok {
-		t = &Topic{Name: topic, TTL: mb.ttl, Created: time.Now()}
+		t = &Topic{Name: topic, Created: time.Now()}
 		mb.topics[topic] = t
 		if mb.metrics != nil {
 			mb.metrics.Counter("bus", "topics").Inc()
@@ -298,13 +316,13 @@ func (mb *MessageBus) Put(message Message) {
 	t := message.Topic
 	q, ok := mb.queues[t]
 	if !ok {
-		q = &Queue{}
+		q = NewQueue(mb.maxQueueSize)
 		mb.queues[message.Topic] = q
 	}
 	q.Push(message)
 
 	if mb.metrics != nil {
-		mb.metrics.GaugeVec("bus", "queues").WithLabelValues(t.Name).Inc()
+		mb.metrics.GaugeVec("queue", "len").WithLabelValues(t.Name).Inc()
 	}
 
 	mb.NotifyAll(message)
@@ -326,7 +344,7 @@ func (mb *MessageBus) Get(t *Topic) (Message, bool) {
 
 	if mb.metrics != nil {
 		mb.metrics.Counter("bus", "fetched").Inc()
-		mb.metrics.GaugeVec("bus", "queues").WithLabelValues(t.Name).Dec()
+		mb.metrics.GaugeVec("queue", "len").WithLabelValues(t.Name).Dec()
 	}
 
 	return m.(Message), true
@@ -356,7 +374,7 @@ func (mb *MessageBus) Subscribe(id, topic string) chan Message {
 
 	t, ok := mb.topics[topic]
 	if !ok {
-		t = &Topic{Name: topic, TTL: mb.ttl, Created: time.Now()}
+		t = &Topic{Name: topic, Created: time.Now()}
 		mb.topics[topic] = t
 	}
 
@@ -431,10 +449,21 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST", "PUT":
+		if r.ContentLength > int64(mb.maxPayloadSize) {
+			msg := "payload exceeds max-payload-size"
+			http.Error(w, msg, http.StatusRequestEntityTooLarge)
+			return
+		}
+
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			msg := fmt.Sprintf("error reading payload: %s", err)
 			http.Error(w, msg, http.StatusBadRequest)
+			return
+		}
+		if len(body) > mb.maxPayloadSize {
+			msg := "payload exceeds max-payload-size"
+			http.Error(w, msg, http.StatusRequestEntityTooLarge)
 			return
 		}
 
@@ -443,7 +472,7 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		msg := fmt.Sprintf(
 			"message successfully published to %s with sequence %d",
-			t.Name, t.Sequence,
+			t.Name, message.ID,
 		)
 		w.Write([]byte(msg))
 	case "GET":
