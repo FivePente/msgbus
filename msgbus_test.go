@@ -91,6 +91,19 @@ func TestServeHTTPPUT(t *testing.T) {
 	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
 }
 
+func TestServeHTTPMaxPayloadSize(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+	w := httptest.NewRecorder()
+	b := bytes.NewBuffer(bytes.Repeat([]byte{'X'}, (DefaultMaxPayloadSize * 2)))
+	r, _ := http.NewRequest("POST", "/hello", b)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(http.StatusRequestEntityTooLarge, w.Code)
+	assert.Regexp(`payload exceeds max-payload-size`, w.Body.String())
+}
+
 func TestServeHTTPSimple(t *testing.T) {
 	assert := assert.New(t)
 
