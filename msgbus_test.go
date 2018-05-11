@@ -164,6 +164,17 @@ func TestServeHTTPSubscriber(t *testing.T) {
 	assert.Equal(msg.Payload, []byte("hello world"))
 }
 
+func TestMsgBusMetrics(t *testing.T) {
+	assert := assert.New(t)
+
+	opts := Options{
+		WithMetrics: true,
+	}
+	mb := New(&opts)
+
+	assert.IsType(&Metrics{}, mb.Metrics())
+}
+
 func BenchmarkMessageBusPut(b *testing.B) {
 	mb := New(nil)
 	topic := mb.NewTopic("foo")
