@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/mmcloughlin/professor"
 	"github.com/prologic/msgbus"
 )
 
@@ -41,6 +42,10 @@ func main() {
 	if version {
 		fmt.Printf("msgbusd %s", msgbus.FullVersion())
 		os.Exit(0)
+	}
+
+	if debug {
+		go professor.Launch(":6060")
 	}
 
 	opts := msgbus.Options{
