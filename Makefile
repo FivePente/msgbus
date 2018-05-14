@@ -39,6 +39,7 @@ image:
 
 profile:
 	@go test -cpuprofile cpu.prof -memprofile mem.prof -v -bench=. $(TEST_ARGS)
+
 bench:
 	@go test -v -bench=. $(TEST_ARGS)
 
