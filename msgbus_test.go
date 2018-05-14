@@ -77,7 +77,8 @@ func TestServeHTTPGETTopics(t *testing.T) {
 
 	mb.ServeHTTP(w, r)
 	assert.Equal(w.Code, http.StatusOK)
-	assert.Regexp(`{"foo":{"name":"foo","seq":0,"created":"\d+-\d+-\d+T\d+:\d+:\d+.\d+-\d+:\d+"},"hello":{"name":"hello","seq":0,"created":"\d+-\d+-\d+T\d+:\d+:\d+.\d+-\d+:\d+"}}`, w.Body.String())
+	assert.Contains(w.Body.String(), "foo")
+	assert.Contains(w.Body.String(), "hello")
 }
 
 func TestServeHTTPGETEmptyQueue(t *testing.T) {
