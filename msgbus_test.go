@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -74,8 +73,7 @@ func TestServeHTTPPOST(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/hello", b)
 
 	mb.ServeHTTP(w, r)
-	assert.Equal(w.Code, http.StatusOK)
-	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
+	assert.Equal(w.Code, http.StatusAccepted)
 }
 
 func TestServeHTTPMaxPayloadSize(t *testing.T) {
@@ -101,8 +99,7 @@ func TestServeHTTPSimple(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/hello", b)
 
 	mb.ServeHTTP(w, r)
-	assert.Equal(w.Code, http.StatusOK)
-	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
+	assert.Equal(w.Code, http.StatusAccepted)
 
 	w = httptest.NewRecorder()
 	r, _ = http.NewRequest("GET", "/hello", nil)
@@ -167,9 +164,6 @@ func TestServeHTTPSubscriber(t *testing.T) {
 	r, err := c.Post(s.URL+"/hello", "text/plain", b)
 	assert.NoError(err)
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-	assert.NoError(err)
-	assert.Regexp(`message successfully published to hello with sequence \d+`, string(body))
 
 	msg := <-msgs
 	assert.Equal(msg.ID, uint64(0))

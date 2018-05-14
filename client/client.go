@@ -38,13 +38,6 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 )
 
-var (
-	// PublishedRegexp ...
-	PublishedRegexp = regexp.MustCompile(
-		"message successfully published to \\w+ with sequence \\d",
-	)
-)
-
 // Client ...
 type Client struct {
 	url string
@@ -162,17 +155,8 @@ func (c *Client) Publish(topic, message string) error {
 		return fmt.Errorf("error publishing message: %s", err)
 	}
 
-	if res.StatusCode != 200 {
-		return fmt.Errorf("unexpected non-200 response: %s", res.Status)
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response: %s", err)
-	}
-
-	if !PublishedRegexp.Match(body) {
-		return fmt.Errorf("unexpected non-matching response: %s", body)
+	if res.StatusCode != 201 {
+		return fmt.Errorf("unexpected response: %s", res.Status)
 	}
 
 	return nil

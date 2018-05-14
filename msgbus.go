@@ -497,6 +497,7 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(out)
 		return
@@ -527,14 +528,9 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		message := mb.NewMessage(t, body)
-		mb.Put(message)
+		mb.Put(mb.NewMessage(t, body))
 
-		msg := fmt.Sprintf(
-			"message successfully published to %s with sequence %d",
-			t.Name, message.ID,
-		)
-		w.Write([]byte(msg))
+		w.WriteHeader(http.StatusAccepted)
 	case "GET":
 		if r.Header.Get("Upgrade") == "websocket" {
 			conn, err := upgrader.Upgrade(w, r, nil)
@@ -562,6 +558,7 @@ func (mb *MessageBus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(out)
 	case "DELETE":
