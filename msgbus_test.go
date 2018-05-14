@@ -64,6 +64,33 @@ func TestServeHTTPGETEmpty(t *testing.T) {
 	assert.Equal(w.Body.String(), "{}")
 }
 
+func TestServeHTTPGETTopics(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+
+	mb.Put(Message{Topic: mb.NewTopic("foo"), Payload: []byte("foo")})
+	mb.Put(Message{Topic: mb.NewTopic("hello"), Payload: []byte("hello world")})
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/", nil)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusOK)
+	assert.Regexp(`{"foo":{"name":"foo","seq":0,"created":"\d+-\d+-\d+T\d+:\d+:\d+.\d+-\d+:\d+"},"hello":{"name":"hello","seq":0,"created":"\d+-\d+-\d+T\d+:\d+:\d+.\d+-\d+:\d+"}}`, w.Body.String())
+}
+
+func TestServeHTTPGETEmptyQueue(t *testing.T) {
+	assert := assert.New(t)
+
+	mb := New(nil)
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/hello", nil)
+
+	mb.ServeHTTP(w, r)
+	assert.Equal(w.Code, http.StatusNotFound)
+}
+
 func TestServeHTTPPOST(t *testing.T) {
 	assert := assert.New(t)
 
