@@ -78,19 +78,6 @@ func TestServeHTTPPOST(t *testing.T) {
 	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
 }
 
-func TestServeHTTPPUT(t *testing.T) {
-	assert := assert.New(t)
-
-	mb := New(nil)
-	w := httptest.NewRecorder()
-	b := bytes.NewBufferString("hello world")
-	r, _ := http.NewRequest("PUT", "/hello", b)
-
-	mb.ServeHTTP(w, r)
-	assert.Equal(w.Code, http.StatusOK)
-	assert.Regexp(`message successfully published to hello with sequence \d+`, w.Body.String())
-}
-
 func TestServeHTTPMaxPayloadSize(t *testing.T) {
 	assert := assert.New(t)
 
@@ -128,6 +115,19 @@ func TestServeHTTPSimple(t *testing.T) {
 	assert.Equal(msg.ID, uint64(0))
 	assert.Equal(msg.Topic.Name, "hello")
 	assert.Equal(msg.Payload, []byte("hello world"))
+}
+
+func BenchmarkServeHTTPPOST(b *testing.B) {
+	mb := New(nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		b := bytes.NewBufferString("hello world")
+		r, _ := http.NewRequest("POST", "/hello", b)
+
+		mb.ServeHTTP(w, r)
+	}
 }
 
 func TestServeHTTPSubscriber(t *testing.T) {

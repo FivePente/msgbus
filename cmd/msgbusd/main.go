@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/mmcloughlin/professor"
 	"github.com/prologic/msgbus"
 )
 
@@ -16,6 +17,7 @@ func main() {
 		version        bool
 		debug          bool
 		bind           string
+		bufferLength   int
 		maxQueueSize   int
 		maxPayloadSize int
 	)
@@ -25,6 +27,7 @@ func main() {
 
 	flag.StringVar(&bind, "bind", ":8000", "interface and port to bind to")
 
+	flag.IntVar(&bufferLength, "buffer-length", msgbus.DefaultBufferLength, "buffer length")
 	flag.IntVar(&maxQueueSize, "max-queue-size", msgbus.DefaultMaxQueueSize, "maximum queue size")
 	flag.IntVar(&maxPayloadSize, "max-payload-size", msgbus.DefaultMaxPayloadSize, "maximum payload size")
 
@@ -41,7 +44,12 @@ func main() {
 		os.Exit(0)
 	}
 
+	if debug {
+		go professor.Launch(":6060")
+	}
+
 	opts := msgbus.Options{
+		BufferLength:   bufferLength,
 		MaxQueueSize:   maxQueueSize,
 		MaxPayloadSize: maxPayloadSize,
 		WithMetrics:    true,
