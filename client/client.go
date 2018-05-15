@@ -153,7 +153,7 @@ func (c *Client) Publish(topic, message string) error {
 		return fmt.Errorf("error publishing message: %s", err)
 	}
 
-	if res.StatusCode != 201 {
+	if res.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("unexpected response: %s", res.Status)
 	}
 
