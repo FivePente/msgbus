@@ -3,6 +3,7 @@ package msgbus
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
@@ -20,9 +21,11 @@ var DefObjectives = map[float64]float64{
 
 // Metrics ...
 type Metrics struct {
+	sync.RWMutex
+
 	namespace string
 	metrics   map[string]prometheus.Metric
-	gaugevecs map[string]*prometheus.GaugeVec
+	guagevecs map[string]*prometheus.GaugeVec
 	sumvecs   map[string]*prometheus.SummaryVec
 }
 
@@ -31,7 +34,7 @@ func NewMetrics(namespace string) *Metrics {
 	return &Metrics{
 		namespace: namespace,
 		metrics:   make(map[string]prometheus.Metric),
-		gaugevecs: make(map[string]*prometheus.GaugeVec),
+		guagevecs: make(map[string]*prometheus.GaugeVec),
 		sumvecs:   make(map[string]*prometheus.SummaryVec),
 	}
 }
@@ -48,7 +51,9 @@ func (m *Metrics) NewCounter(subsystem, name, help string) prometheus.Counter {
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.metrics[key] = counter
+	m.Unlock()
 	prometheus.MustRegister(counter)
 
 	return counter
@@ -67,7 +72,9 @@ func (m *Metrics) NewCounterFunc(subsystem, name, help string, f func() float64)
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.metrics[key] = counter
+	m.Unlock()
 	prometheus.MustRegister(counter)
 
 	return counter
@@ -85,7 +92,9 @@ func (m *Metrics) NewGauge(subsystem, name, help string) prometheus.Gauge {
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.metrics[key] = guage
+	m.Unlock()
 	prometheus.MustRegister(guage)
 
 	return guage
@@ -104,7 +113,9 @@ func (m *Metrics) NewGaugeFunc(subsystem, name, help string, f func() float64) p
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.metrics[key] = guage
+	m.Unlock()
 	prometheus.MustRegister(guage)
 
 	return guage
@@ -112,7 +123,7 @@ func (m *Metrics) NewGaugeFunc(subsystem, name, help string, f func() float64) p
 
 // NewGaugeVec ...
 func (m *Metrics) NewGaugeVec(subsystem, name, help string, labels []string) *prometheus.GaugeVec {
-	gauagevec := prometheus.NewGaugeVec(
+	guagevec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: m.namespace,
 			Subsystem: subsystem,
@@ -123,10 +134,12 @@ func (m *Metrics) NewGaugeVec(subsystem, name, help string, labels []string) *pr
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
-	m.gaugevecs[key] = gauagevec
-	prometheus.MustRegister(gauagevec)
+	m.Lock()
+	m.guagevecs[key] = guagevec
+	m.Unlock()
+	prometheus.MustRegister(guagevec)
 
-	return gauagevec
+	return guagevec
 }
 
 // NewSummary ...
@@ -142,7 +155,9 @@ func (m *Metrics) NewSummary(subsystem, name, help string) prometheus.Summary {
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.metrics[key] = summary
+	m.Unlock()
 	prometheus.MustRegister(summary)
 
 	return summary
@@ -162,7 +177,9 @@ func (m *Metrics) NewSummaryVec(subsystem, name, help string, labels []string) *
 	)
 
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
 	m.sumvecs[key] = sumvec
+	m.Unlock()
 	prometheus.MustRegister(sumvec)
 
 	return sumvec
@@ -177,24 +194,32 @@ func (m *Metrics) Counter(subsystem, name string) prometheus.Counter {
 // Gauge ...
 func (m *Metrics) Gauge(subsystem, name string) prometheus.Gauge {
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.RLock()
+	defer m.RUnlock()
 	return m.metrics[key].(prometheus.Gauge)
 }
 
 // GaugeVec ...
 func (m *Metrics) GaugeVec(subsystem, name string) *prometheus.GaugeVec {
 	key := fmt.Sprintf("%s_%s", subsystem, name)
-	return m.gaugevecs[key]
+	m.RLock()
+	defer m.RUnlock()
+	return m.guagevecs[key]
 }
 
 // Summary ...
 func (m *Metrics) Summary(subsystem, name string) prometheus.Summary {
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.RLock()
+	defer m.RUnlock()
 	return m.metrics[key].(prometheus.Summary)
 }
 
 // SummaryVec ...
 func (m *Metrics) SummaryVec(subsystem, name string) *prometheus.SummaryVec {
 	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.RLock()
+	defer m.RUnlock()
 	return m.sumvecs[key]
 }
 
