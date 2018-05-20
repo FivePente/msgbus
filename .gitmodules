@@ -76,3 +76,9 @@
 [submodule "vendor/github.com/prometheus/procfs"]
 	path = vendor/github.com/prometheus/procfs
 	url = https://github.com/prometheus/procfs
+[submodule "vendor/github.com/mmcloughlin/professor"]
+	path = vendor/github.com/mmcloughlin/professor
+	url = https://github.com/mmcloughlin/professor
+[submodule "vendor/github.com/jpillora/backoff"]
+	path = vendor/github.com/jpillora/backoff
+	url = https://github.com/jpillora/backoff
