@@ -20,10 +20,10 @@ const (
 	DefaultMaxQueueSize = 1000 // ~4MB per queue (1000 * 4KB)
 
 	// DefaultMaxPayloadSize is the default maximum payload size
-	DefaultMaxPayloadSize = 4096 // 4KB
+	DefaultMaxPayloadSize = 8192 // 8KB
 
 	// DefaultBufferLength is the default buffer length for subscriber chans
-	DefaultBufferLength = 10
+	DefaultBufferLength = 100
 
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
