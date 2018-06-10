@@ -18,7 +18,7 @@ import (
 
 // subCmd represents the pub command
 var subCmd = &cobra.Command{
-	Use:     "sub [flags] <topic> [<command>]",
+	Use:     "sub [flags] <topic> [<command>] [<arg> ...]",
 	Aliases: []string{"reg"},
 	Short:   "Subscribe to a topic",
 	Long: `This subscribes to the given topic and for every message published
@@ -31,12 +31,16 @@ supplied command is executed with the contents of the message as stdin.`,
 
 		topic := args[0]
 
-		var command string
+		var (
+			command string
+		)
+
 		if len(args) > 1 {
 			command = args[1]
+			args = args[1:]
 		}
 
-		subscribe(client, topic, command)
+		subscribe(client, topic, command, args)
 	},
 }
 
@@ -44,7 +48,7 @@ func init() {
 	RootCmd.AddCommand(subCmd)
 }
 
-func handler(command string) msgbus.HandlerFunc {
+func handler(command string, args []string) msgbus.HandlerFunc {
 	return func(msg *msgbus.Message) error {
 		out, err := json.Marshal(msg)
 		if err != nil {
@@ -58,7 +62,7 @@ func handler(command string) msgbus.HandlerFunc {
 			return nil
 		}
 
-		cmd := exec.Command(command)
+		cmd := exec.Command(command, args...)
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
 			log.Printf("error connecting to stdin of %s: %s", command, err)
@@ -82,12 +86,12 @@ func handler(command string) msgbus.HandlerFunc {
 	}
 }
 
-func subscribe(client *client.Client, topic, command string) {
+func subscribe(client *client.Client, topic, command string, args []string) {
 	if topic == "" {
 		topic = defaultTopic
 	}
 
-	s := client.Subscribe(topic, handler(command))
+	s := client.Subscribe(topic, handler(command, args))
 	s.Start()
 
 	sigs := make(chan os.Signal, 1)
