@@ -37,7 +37,7 @@ supplied command is executed with the contents of the message as stdin.`,
 
 		if len(args) > 1 {
 			command = args[1]
-			args = args[1:]
+			args = args[2:]
 		}
 
 		subscribe(client, topic, command, args)
