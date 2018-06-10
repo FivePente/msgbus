@@ -14,11 +14,13 @@ func TestMetrics(t *testing.T) {
 	m := NewMetrics("test")
 	m.NewCounter("foo", "counter", "help")
 	m.NewCounterFunc("foo", "counter_func", "help", func() float64 { return 1.0 })
+	m.NewCounterVec("foo", "counter_vec", "help", []string{"test"})
 	m.NewGauge("foo", "gauge", "help")
 	m.NewGaugeFunc("foo", "gauge_func", "help", func() float64 { return 1.0 })
 	m.NewGaugeVec("foo", "gauge_vec", "help", []string{"test"})
 
 	m.Counter("foo", "counter").Inc()
+	m.CounterVec("foo", "counter_vec").WithLabelValues("test").Add(1)
 	m.Gauge("foo", "gauge").Add(1)
 	m.GaugeVec("foo", "gauge_vec").WithLabelValues("test").Add(1)
 
@@ -36,6 +38,9 @@ test_foo_counter 1
 # HELP test_foo_counter_func help
 # TYPE test_foo_counter_func counter
 test_foo_counter_func 1
+# HELP test_foo_counter_vec help
+# TYPE test_foo_counter_vec counter
+test_foo_counter_vec{test="test"} 1
 # HELP test_foo_gauge help
 # TYPE test_foo_gauge gauge
 test_foo_gauge 1

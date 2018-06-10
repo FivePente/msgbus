@@ -23,19 +23,21 @@ var DefObjectives = map[float64]float64{
 type Metrics struct {
 	sync.RWMutex
 
-	namespace string
-	metrics   map[string]prometheus.Metric
-	guagevecs map[string]*prometheus.GaugeVec
-	sumvecs   map[string]*prometheus.SummaryVec
+	namespace   string
+	metrics     map[string]prometheus.Metric
+	countervecs map[string]*prometheus.CounterVec
+	guagevecs   map[string]*prometheus.GaugeVec
+	sumvecs     map[string]*prometheus.SummaryVec
 }
 
 // NewMetrics ...
 func NewMetrics(namespace string) *Metrics {
 	return &Metrics{
-		namespace: namespace,
-		metrics:   make(map[string]prometheus.Metric),
-		guagevecs: make(map[string]*prometheus.GaugeVec),
-		sumvecs:   make(map[string]*prometheus.SummaryVec),
+		namespace:   namespace,
+		metrics:     make(map[string]prometheus.Metric),
+		countervecs: make(map[string]*prometheus.CounterVec),
+		guagevecs:   make(map[string]*prometheus.GaugeVec),
+		sumvecs:     make(map[string]*prometheus.SummaryVec),
 	}
 }
 
@@ -78,6 +80,27 @@ func (m *Metrics) NewCounterFunc(subsystem, name, help string, f func() float64)
 	prometheus.MustRegister(counter)
 
 	return counter
+}
+
+// NewCounterVec ...
+func (m *Metrics) NewCounterVec(subsystem, name, help string, labels []string) *prometheus.CounterVec {
+	countervec := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: m.namespace,
+			Subsystem: subsystem,
+			Name:      name,
+			Help:      help,
+		},
+		labels,
+	)
+
+	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.Lock()
+	m.countervecs[key] = countervec
+	m.Unlock()
+	prometheus.MustRegister(countervec)
+
+	return countervec
 }
 
 // NewGauge ...
@@ -189,6 +212,14 @@ func (m *Metrics) NewSummaryVec(subsystem, name, help string, labels []string) *
 func (m *Metrics) Counter(subsystem, name string) prometheus.Counter {
 	key := fmt.Sprintf("%s_%s", subsystem, name)
 	return m.metrics[key].(prometheus.Counter)
+}
+
+// CounterVec ...
+func (m *Metrics) CounterVec(subsystem, name string) *prometheus.CounterVec {
+	key := fmt.Sprintf("%s_%s", subsystem, name)
+	m.RLock()
+	defer m.RUnlock()
+	return m.countervecs[key]
 }
 
 // Gauge ...
