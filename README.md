@@ -209,6 +209,10 @@ Deletes a queue named by `<topic>`.
 
 *Not implemented*.
 
+## Related Projects
+
+* [je](https://github.com/prologic/je) -- A distributed job execution engine for the execution of batch jobs, workflows, remediations and more.
+
 ## License
 
 msgbus is licensed under the [MIT License](https://github.com/prologic/msgbus/blob/master/LICENSE)
