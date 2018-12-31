@@ -3,5 +3,5 @@ dist
 *.bak
 *.prof
 coverage.txt
-cmd/msgbus/msgbus
-cmd/msgbusd/msgbusd
+./cmd/msgbus/msgbus
+./cmd/msgbusd/msgbusd

@@ -54,6 +54,10 @@ type Topic struct {
 	Created  time.Time `json:"created"`
 }
 
+func (t *Topic) String() string {
+	return t.Name
+}
+
 // Message ...
 type Message struct {
 	ID      uint64    `json:"id"`

@@ -191,7 +191,7 @@ func NewSubscriber(client *Client, topic string, handler msgbus.HandlerFunc) *Su
 
 	u, err := url.Parse(client.url)
 	if err != nil {
-		log.Fatal("invalid url: %s", client.url)
+		log.Fatalf("invalid url: %s", client.url)
 	}
 
 	if strings.HasPrefix(client.url, "https") {
