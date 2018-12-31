@@ -47,4 +47,4 @@ test:
 	@go test -v -cover -coverprofile=coverage.txt -covermode=atomic -coverpkg=./... -race ./...
 
 clean:
-	@rm -rf $(APP)
+	@git clean -f -d -X
